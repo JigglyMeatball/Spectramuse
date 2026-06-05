@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chromatype — A Chromatype for living stories</title>
+<style>
+  :root {
+    --ink: #f8efe2;
+    --accent: #ffcc7a;
+    --hue: 32;
+    --hue2: 210;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    overflow: hidden;
+    font-family: "Courier New", Courier, monospace;
+    color: var(--ink);
+    background: #09080b;
+  }
+
+  #stage {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .grain {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: .22;
+    mix-blend-mode: overlay;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,.13) 0 1px, transparent 1px),
+      radial-gradient(circle at 70% 60%, rgba(0,0,0,.2) 0 1px, transparent 1px);
+    background-size: 5px 5px, 7px 7px;
+    animation: crawl 1.5s steps(4) infinite;
+    z-index: 1;
+  }
+
+  @keyframes crawl {
+    from { transform: translate(0,0); }
+    to { transform: translate(-12px, 9px); }
+  }
+
+  .studio {
+    position: relative;
+    z-index: 2;
+    width: min(1180px, calc(100vw - 28px));
+    height: min(93vh, 940px);
+    margin: 3.5vh auto;
+    padding: 22px;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 28px;
+    background: linear-gradient(145deg, rgba(25,21,30,.88), rgba(6,6,10,.74));
+    box-shadow: 0 35px 120px rgba(0,0,0,.62), inset 0 0 50px rgba(255,255,255,.04);
+    backdrop-filter: blur(12px);
+    display: grid;
+    grid-template-rows: auto 1fr auto auto;
+    gap: 14px;
+  }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.8rem, 4.8vw, 4.6rem);
+    line-height: .9;
+    letter-spacing: .02em;
+    text-shadow: 0 0 22px rgba(255,255,255,.14);
+  }
+
+  .subcopy {
+    color: rgba(248,239,226,.65);
+    font-size: .95rem;
+    margin-top: 10px;
+    line-height: 1.4;
+  }
+
+  .badge {
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 999px;
+    padding: 9px 13px;
+    font-size: .82rem;
+    color: rgba(248,239,226,.78);
+    white-space: nowrap;
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(320px, .92fr);
+    gap: 14px;
+    min-height: 0;
+  }
+
+  .editor, .viewer, .panel {
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.13);
+    background: rgba(255,255,255,.055);
+  }
+
+  .editor {
+    padding: 16px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  .label {
+    font-size: .76rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: rgba(248,239,226,.54);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 0;
+    resize: none;
+    border: 0;
+    outline: none;
+    border-radius: 16px;
+    padding: 18px;
+    color: var(--ink);
+    background: rgba(0,0,0,.2);
+    font: 700 clamp(1.1rem, 2.4vw, 2rem) "Courier New", Courier, monospace;
+    line-height: 1.32;
+    caret-color: var(--accent);
+    box-shadow: inset 0 0 35px rgba(0,0,0,.18);
+  }
+
+  textarea::placeholder {
+    color: rgba(248,239,226,.26);
+  }
+
+  .typebar {
+    min-height: 56px;
+    border-radius: 14px;
+    padding: 11px 14px;
+    background: rgba(0,0,0,.18);
+    border: 1px solid rgba(255,255,255,.10);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .current-word {
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    font-weight: 800;
+    color: var(--accent);
+    text-shadow: 0 0 18px color-mix(in srgb, var(--accent), transparent 50%);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .viewer {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .story-card {
+    position: relative;
+    min-height: 0;
+    display: grid;
+    place-items: center;
+    padding: 28px;
+    overflow: hidden;
+  }
+
+  .story-card::before {
+    content: "";
+    position: absolute;
+    inset: -30%;
+    background:
+      radial-gradient(circle at 30% 20%, hsla(var(--hue), 90%, 70%, .26), transparent 32%),
+      radial-gradient(circle at 70% 70%, hsla(var(--hue2), 92%, 66%, .28), transparent 35%);
+    animation: rotateField 12s linear infinite;
+  }
+
+  @keyframes rotateField {
+    from { transform: rotate(0deg) scale(1); }
+    to { transform: rotate(360deg) scale(1.1); }
+  }
+
+  .line-display {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-height: 100%;
+    overflow: auto;
+    font-size: clamp(1.35rem, 3.1vw, 2.85rem);
+    line-height: 1.25;
+    font-weight: 800;
+    text-align: center;
+    text-shadow: 0 4px 28px rgba(0,0,0,.72);
+    white-space: pre-wrap;
+  }
+
+  .export-strip {
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    border-top: 1px solid rgba(255,255,255,.10);
+  }
+
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+
+  .panel {
+    padding: 13px;
+    min-height: 84px;
+  }
+
+  .value {
+    margin-top: 9px;
+    font-size: .96rem;
+    line-height: 1.35;
+  }
+
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 9px;
+  }
+
+  button, select {
+    border: 0;
+    border-radius: 13px;
+    padding: 13px 12px;
+    background: var(--accent);
+    color: #151016;
+    font: 800 .93rem "Courier New", Courier, monospace;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(0,0,0,.25);
+  }
+
+  button.secondary, select {
+    background: rgba(255,255,255,.10);
+    color: var(--ink);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+
+  button.record {
+    background: linear-gradient(180deg, #ff7a7a, #ff5252);
+    color: white;
+  }
+
+  button.stop {
+    background: linear-gradient(180deg, #ffd07a, #ffb347);
+    color: #19130d;
+  }
+
+  button:active { transform: translateY(2px); }
+
+  .hint {
+    color: rgba(248,239,226,.55);
+    font-size: .86rem;
+    line-height: 1.35;
+  }
+
+  .status {
+    color: rgba(248,239,226,.72);
+    font-size: .86rem;
+    min-height: 1.2em;
+    line-height: 1.35;
+  }
+
+  @media (max-width: 900px) {
+    body { overflow: auto; }
+    .studio { height: auto; margin: 14px auto; }
+    .workspace { grid-template-columns: 1fr; }
+    .panels { grid-template-columns: 1fr; }
+    .buttons { grid-template-columns: 1fr 1fr; }
+    .topbar { flex-direction: column; }
+    .export-strip { grid-template-columns: 1fr; }
+    .story-card { min-height: 340px; }
+    textarea { min-height: 360px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div class="grain"></div>
+
+<main class="studio">
+  <section class="topbar">
+    <div>
+      <h1>Synesthetic<br>Typewriter</h1>
+      <div class="subcopy">
+        A Synesthetic Typewriter for living stories.<br>
+        Write a story, then record it as moving color, texture, and sound.
+      </div>
+    </div>
+    <div class="badge">A Synesthetic Typewriter for living stories</div>
+  </section>
+
+  <section class="workspace">
+    <div class="editor">
+      <div class="label">Story keys</div>
+      <textarea id="storyInput" placeholder="Type your story here...
+
+Example:
+The moon opened like a silver eye.
+Moss climbed the old stone door.
+Thunder wrote its name across the sky."></textarea>
+
+      <div class="typebar">
+        <div>
+          <div class="label">Current sensory word</div>
+          <div class="current-word" id="currentWord">waiting</div>
+        </div>
+        <div class="status" id="status">Ready.</div>
+      </div>
+    </div>
+
+    <div class="viewer">
+      <div class="story-card" id="storyCard">
+        <div class="line-display" id="lineDisplay">Your living story will appear here.</div>
+      </div>
+      <div class="export-strip">
+        <select id="formatSelect" title="Choose output shape">
+          <option value="vertical">Vertical 9:16 social video frame</option>
+          <option value="square">Square post frame</option>
+          <option value="wide">Wide YouTube frame</option>
+        </select>
+        <button id="copyButton" class="secondary">copy caption</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panels">
+    <div class="panel">
+      <div class="label">Color</div>
+      <div class="value" id="colorName">waiting for ink</div>
+    </div>
+    <div class="panel">
+      <div class="label">Texture</div>
+      <div class="value" id="textureName">silent paper</div>
+    </div>
+    <div class="panel">
+      <div class="label">Sound</div>
+      <div class="value" id="soundName">unstruck key</div>
+    </div>
+  </section>
+
+  <section class="buttons">
+    <button id="playButton">perform story</button>
+    <button id="sceneButton" class="secondary">perform current scene</button>
+    <button id="recordButton" class="record">record story video</button>
+    <button id="stopRecordButton" class="stop secondary">stop recording</button>
+    <button id="downloadImageButton" class="secondary">save visual card</button>
+  </section>
+
+  <section class="buttons">
+    <button id="downloadTextButton" class="secondary">download story</button>
+    <button id="downloadStoryboardButton" class="secondary">download storyboard</button>
+    <button id="performAndSaveSceneButton" class="secondary">record current scene</button>
+    <button id="clearButton" class="secondary">clear story</button>
+    <button id="loadSampleButton" class="secondary">load sample</button>
+  </section>
+</main>
+
+<script>
+const canvas = document.getElementById("stage");
+const ctx = canvas.getContext("2d");
+const storyInput = document.getElementById("storyInput");
+const currentWord = document.getElementById("currentWord");
+const lineDisplay = document.getElementById("lineDisplay");
+const colorName = document.getElementById("colorName");
+const textureName = document.getElementById("textureName");
+const soundName = document.getElementById("soundName");
+const statusEl = document.getElementById("status");
+const playButton = document.getElementById("playButton");
+const sceneButton = document.getElementById("sceneButton");
+const copyButton = document.getElementById("copyButton");
+const downloadTextButton = document.getElementById("downloadTextButton");
+const downloadImageButton = document.getElementById("downloadImageButton");
+const downloadStoryboardButton = document.getElementById("downloadStoryboardButton");
+const performAndSaveSceneButton = document.getElementById("performAndSaveSceneButton");
+const clearButton = document.getElementById("clearButton");
+const loadSampleButton = document.getElementById("loadSampleButton");
+const recordButton = document.getElementById("recordButton");
+const stopRecordButton = document.getElementById("stopRecordButton");
+const formatSelect = document.getElementById("formatSelect");
+
+let W, H, t = 0;
+let state = {
+  word: "story",
+  hue: 32,
+  hue2: 210,
+  saturation: 72,
+  lightness: 54,
+  energy: .45,
+  softness: .5,
+  sharpness: .4,
+  texture: "paper grain",
+  mode: 0
+};
+
+let performanceToken = 0;
+let isPerforming = false;
+let activeRecorder = null;
+let activeRecordingMode = false;
+let currentDisplayText = "Your living story will appear here.";
+let lastRecordedBlob = null;
+
+function resize() {
+  W = canvas.width = window.innerWidth * devicePixelRatio;
+  H = canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  W = window.innerWidth;
+  H = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+function hashWord(word) {
+  let h = 2166136261;
+  for (const c of word) {
+    h ^= c.charCodeAt(0);
+    h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+  }
+  return Math.abs(h >>> 0);
+}
+
+function cleanWord(word) {
+  return (word || "").toLowerCase().replace(/[^a-z0-9']/g, "");
+}
+
+function getWords(text) {
+  return (text.match(/[a-zA-Z0-9']+/g) || []).map(cleanWord).filter(Boolean);
+}
+
+function getScenes(text) {
+  const scenes = text
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  return scenes.length ? scenes : [text.trim()].filter(Boolean);
+}
+
+function analyze(word) {
+  const clean = cleanWord(word) || "story";
+  const vowels = (clean.match(/[aeiou]/g) || []).length;
+  const soft = (clean.match(/[mnlwvsy]/g) || []).length;
+  const sharp = (clean.match(/[ktxzpq]/g) || []).length;
+  const growl = (clean.match(/[grbd]/g) || []).length;
+  const h = hashWord(clean);
+
+  state.word = clean;
+  state.hue = h % 360;
+  state.hue2 = (state.hue + 90 + (vowels * 17)) % 360;
+  state.saturation = Math.min(96, 52 + (sharp * 6) + (vowels * 3));
+  state.lightness = 38 + Math.min(26, soft * 5 + vowels * 2);
+  state.energy = Math.min(1, .22 + (sharp + growl + clean.length / 5) / 8);
+  state.softness = Math.min(1, .15 + soft / Math.max(1, clean.length));
+  state.sharpness = Math.min(1, .12 + sharp / Math.max(1, clean.length));
+  state.mode = h % 6;
+
+  const textures = ["velvet bloom", "liquid marble", "electric static", "bark rings", "glass ripples", "star-salt dust"];
+  state.texture = textures[state.mode];
+
+  const colorWords = ["ember", "copper", "moss", "lagoon", "violet", "rose", "honey", "ink"];
+  colorName.textContent = `${colorWords[Math.floor(state.hue / 45) % colorWords.length]} field — hsl(${state.hue}, ${Math.round(state.saturation)}%, ${Math.round(state.lightness)}%)`;
+  textureName.textContent = `${state.texture}, ${state.softness > .45 ? "soft-edged" : "hard-edged"} motion`;
+  soundName.textContent = `${sharp > soft ? "bright pluck" : "warm drone"} / ${Math.round(180 + (h % 520))} Hz root`;
+  currentWord.textContent = clean;
+
+  document.documentElement.style.setProperty("--accent", `hsl(${state.hue2}, 92%, 68%)`);
+  document.documentElement.style.setProperty("--hue", state.hue);
+  document.documentElement.style.setProperty("--hue2", state.hue2);
+}
+
+function drawField(targetCtx, width, height, localT, scale=1) {
+  const grad = targetCtx.createLinearGradient(0, 0, width, height);
+  grad.addColorStop(0, `hsl(${state.hue}, ${state.saturation}%, ${Math.max(10, state.lightness - 24)}%)`);
+  grad.addColorStop(.52, `hsl(${state.hue2}, ${Math.min(96, state.saturation + 12)}%, ${state.lightness}%)`);
+  grad.addColorStop(1, `hsl(${(state.hue + 190) % 360}, ${state.saturation}%, ${Math.max(11, state.lightness - 18)}%)`);
+  targetCtx.fillStyle = grad;
+  targetCtx.fillRect(0, 0, width, height);
+
+  targetCtx.globalCompositeOperation = "screen";
+  const count = 70 + Math.floor(state.energy * 110);
+  for (let i = 0; i < count; i++) {
+    const x = width * (.5 + .46 * Math.sin(localT * (0.5 + state.sharpness) + i * 2.13 + state.hue));
+    const y = height * (.5 + .42 * Math.cos(localT * (0.75 + state.softness) + i * 1.61));
+    const r = (18 + 120 * Math.abs(Math.sin(localT + i))) * scale;
+    targetCtx.beginPath();
+
+    if (state.mode === 0) targetCtx.arc(x, y, r * (0.6 + state.softness), 0, Math.PI * 2);
+    else if (state.mode === 1) targetCtx.ellipse(x, y, r * 1.8, r * .35, localT + i, 0, Math.PI * 2);
+    else if (state.mode === 2) targetCtx.rect(x - r/2, y - r/2, r, r);
+    else if (state.mode === 3) targetCtx.arc(x, y, r, 0, Math.PI * (1.2 + Math.sin(localT + i)));
+    else if (state.mode === 4) {
+      targetCtx.moveTo(x, y - r);
+      targetCtx.lineTo(x + r, y);
+      targetCtx.lineTo(x, y + r);
+      targetCtx.lineTo(x - r, y);
+      targetCtx.closePath();
+    } else {
+      for (let a = 0; a < 6; a++) {
+        const px = x + Math.cos(a * Math.PI / 3 + localT) * r;
+        const py = y + Math.sin(a * Math.PI / 3 + localT) * r;
+        a === 0 ? targetCtx.moveTo(px, py) : targetCtx.lineTo(px, py);
+      }
+      targetCtx.closePath();
+    }
+
+    targetCtx.fillStyle = `hsla(${(state.hue2 + i * 7) % 360}, 90%, 70%, ${0.015 + state.energy * 0.018})`;
+    targetCtx.fill();
+  }
+
+  targetCtx.globalCompositeOperation = "multiply";
+  targetCtx.lineWidth = 1.4 * scale;
+  for (let y = 0; y < height; y += 9 * scale) {
+    targetCtx.beginPath();
+    for (let x = 0; x <= width; x += 18 * scale) {
+      const wave = Math.sin(x * .015 + localT * 5 + y * .03) * (7 + state.energy * 22) * scale;
+      const yy = y + wave;
+      x === 0 ? targetCtx.moveTo(x, yy) : targetCtx.lineTo(x, yy);
+    }
+    targetCtx.strokeStyle = `hsla(${state.hue}, 70%, 12%, ${.06 + state.sharpness * .08})`;
+    targetCtx.stroke();
+  }
+  targetCtx.globalCompositeOperation = "source-over";
+}
+
+function wrapLines(c, text, maxWidth) {
+  const words = (text || "").split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = "";
+  words.forEach(word => {
+    const test = line ? `${line} ${word}` : word;
+    if (c.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  });
+  if (line) lines.push(line);
+  return lines;
+}
+
+function renderStoryFrame(targetCtx, width, height, text, localT, format="wide") {
+  drawField(targetCtx, width, height, localT, width / 1080);
+  targetCtx.fillStyle = "rgba(8, 7, 12, .30)";
+  targetCtx.fillRect(0, 0, width, height);
+
+  const cardMargin = Math.round(width * 0.08);
+  const cardW = width - cardMargin * 2;
+  const cardH = height - Math.round(height * 0.18);
+  const cardX = cardMargin;
+  const cardY = Math.round(height * 0.09);
+  const radius = Math.max(24, Math.round(width * 0.024));
+
+  targetCtx.fillStyle = "rgba(8, 7, 12, .30)";
+  targetCtx.strokeStyle = "rgba(248, 239, 226, .18)";
+  targetCtx.lineWidth = Math.max(2, width * 0.0022);
+  roundRect(targetCtx, cardX, cardY, cardW, cardH, radius, true, true);
+
+  const overlayGrad = targetCtx.createRadialGradient(
+    width * .3, height * .25, width * .04,
+    width * .65, height * .68, width * .85
+  );
+  overlayGrad.addColorStop(0, `hsla(${state.hue2}, 96%, 72%, .16)`);
+  overlayGrad.addColorStop(1, `hsla(${state.hue}, 70%, 20%, 0)`);
+  targetCtx.fillStyle = overlayGrad;
+  roundRect(targetCtx, cardX, cardY, cardW, cardH, radius, true, false);
+
+  const titleSize = Math.round(width * (format === "vertical" ? 0.03 : 0.022));
+  const textSize = Math.round(width * (format === "vertical" ? 0.055 : format === "square" ? 0.05 : 0.04));
+  const metaSize = Math.round(width * (format === "vertical" ? 0.023 : 0.018));
+
+  targetCtx.fillStyle = "rgba(248,239,226,.92)";
+  targetCtx.textAlign = "center";
+  targetCtx.textBaseline = "middle";
+  targetCtx.font = `700 ${titleSize}px Courier New, monospace`;
+  targetCtx.fillText("Chromatype", width / 2, cardY + titleSize * 1.4);
+
+  targetCtx.font = `800 ${textSize}px Courier New, monospace`;
+  const maxTextWidth = cardW * 0.78;
+  const lines = wrapLines(targetCtx, text, maxTextWidth).slice(0, 14);
+  const lineHeight = textSize * 1.32;
+  const textBlockHeight = Math.max(lineHeight, lines.length * lineHeight);
+  let startY = cardY + cardH / 2 - textBlockHeight / 2 + lineHeight * .12;
+
+  targetCtx.shadowColor = "rgba(0,0,0,.60)";
+  targetCtx.shadowBlur = width * 0.02;
+  targetCtx.fillStyle = "#f8efe2";
+  lines.forEach((ln, i) => {
+    targetCtx.fillText(ln, width / 2, startY + i * lineHeight);
+  });
+  targetCtx.shadowBlur = 0;
+
+  targetCtx.font = `700 ${metaSize}px Courier New, monospace`;
+  targetCtx.fillStyle = "rgba(248,239,226,.78)";
+  targetCtx.fillText(
+    `${state.texture} / ${soundName.textContent}`,
+    width / 2,
+    cardY + cardH - metaSize * 1.8
+  );
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+
+function animate() {
+  t += 0.008 + state.energy * 0.016;
+  drawField(ctx, W, H, t, 1);
+
+  if (activeRecorder && activeRecorder.ctx) {
+    renderStoryFrame(
+      activeRecorder.ctx,
+      activeRecorder.canvas.width,
+      activeRecorder.canvas.height,
+      currentDisplayText,
+      t,
+      activeRecorder.format
+    );
+  }
+
+  requestAnimationFrame(animate);
+}
+animate();
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function buildAudioChain(audioCtx) {
+  const masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.9;
+  masterGain.connect(audioCtx.destination);
+
+  const mediaDestination = audioCtx.createMediaStreamDestination();
+  masterGain.connect(mediaDestination);
+
+  return { masterGain, mediaDestination };
+}
+
+function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const audio = audioCtx || new AudioContext();
+  const clean = cleanWord(word) || "story";
+  const h = hashWord(clean);
+  const root = 140 + (h % 520);
+  const now = audio.currentTime + offset;
+  const chars = clean.split("").slice(0, 14);
+
+  chars.forEach((ch, i) => {
+    const code = Math.max(1, ch.charCodeAt(0) - 96);
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    const filter = audio.createBiquadFilter();
+
+    osc.type = state.sharpness > state.softness ? "triangle" : "sine";
+    osc.frequency.setValueAtTime(root + code * 8 + (i % 5) * 32, now + i * .045);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(500 + state.lightness * 30 + code * 35, now + i * .045);
+
+    gain.gain.setValueAtTime(0, now + i * .045);
+    gain.gain.linearRampToValueAtTime(.038 + state.energy * .032, now + i * .045 + .012);
+    gain.gain.exponentialRampToValueAtTime(.001, now + i * .045 + .30 + state.softness * .25);
+
+    osc.connect(filter);
+    filter.connect(gain);
+
+    if (audioOut) gain.connect(audioOut);
+    else gain.connect(audio.destination);
+
+    osc.start(now + i * .045);
+    osc.stop(now + i * .045 + .55);
+  });
+
+  if (!audioCtx) setTimeout(() => audio.close(), 1500);
+}
+
+function updateFromTyping() {
+  const text = storyInput.value;
+  const words = getWords(text);
+  const last = words[words.length - 1] || "story";
+  analyze(last);
+  const scenes = getScenes(text);
+  currentDisplayText = scenes[scenes.length - 1] || "Your living story will appear here.";
+  lineDisplay.textContent = currentDisplayText;
+  statusEl.textContent = `${words.length} words / ${scenes.length} scenes`;
+}
+
+function getFormatDims(format) {
+  return {
+    vertical: [1080, 1920],
+    square: [1080, 1080],
+    wide: [1920, 1080]
+  }[format] || [1920, 1080];
+}
+
+async function startRecorder(format) {
+  const [rw, rh] = getFormatDims(format);
+  const recordCanvas = document.createElement("canvas");
+  recordCanvas.width = rw;
+  recordCanvas.height = rh;
+  const rctx = recordCanvas.getContext("2d");
+
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const audio = new AudioContext();
+  await audio.resume();
+  const chain = buildAudioChain(audio);
+
+  const stream = recordCanvas.captureStream(30);
+  chain.mediaDestination.stream.getAudioTracks().forEach(track => stream.addTrack(track));
+
+  let mimeType = "";
+  const mimeOptions = [
+    "video/webm;codecs=vp9,opus",
+    "video/webm;codecs=vp8,opus",
+    "video/webm"
+  ];
+  for (const type of mimeOptions) {
+    if (MediaRecorder.isTypeSupported(type)) {
+      mimeType = type;
+      break;
+    }
+  }
+
+  const chunks = [];
+  const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+  recorder.ondataavailable = e => {
+    if (e.data && e.data.size > 0) chunks.push(e.data);
+  };
+
+  const stopped = new Promise(resolve => {
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: mimeType || "video/webm" });
+      lastRecordedBlob = blob;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `chromatype-${format}.webm`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+      resolve(blob);
+    };
+  });
+
+  recorder.start(250);
+
+  activeRecorder = {
+    recorder,
+    audio,
+    audioOut: chain.masterGain,
+    canvas: recordCanvas,
+    ctx: rctx,
+    format,
+    stopped
+  };
+  activeRecordingMode = true;
+  statusEl.textContent = `Recording ${format} video...`;
+  return activeRecorder;
+}
+
+async function stopRecorder() {
+  if (!activeRecorder) return null;
+  const local = activeRecorder;
+  activeRecorder = null;
+  activeRecordingMode = false;
+  try {
+    if (local.recorder.state !== "inactive") local.recorder.stop();
+  } catch {}
+  try {
+    await sleep(250);
+    await local.audio.close();
+  } catch {}
+  const blob = await local.stopped;
+  statusEl.textContent = "Recording saved as .webm";
+  return blob;
+}
+
+async function performStory(options = {}) {
+  const { currentOnly = false, record = false } = options;
+  const text = storyInput.value.trim();
+  if (!text) {
+    statusEl.textContent = "Write a story first.";
+    return;
+  }
+  if (isPerforming) {
+    statusEl.textContent = "Already performing.";
+    return;
+  }
+
+  const token = ++performanceToken;
+  isPerforming = true;
+  recordButton.disabled = true;
+  playButton.disabled = true;
+  sceneButton.disabled = true;
+  performAndSaveSceneButton.disabled = true;
+
+  const scenes = currentOnly ? [getScenes(text).slice(-1)[0]] : getScenes(text);
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const audio = new AudioContext();
+  await audio.resume();
+
+  let outputNode = audio.destination;
+  if (record) {
+    const rec = await startRecorder(formatSelect.value);
+    outputNode = rec.audioOut;
+  }
+
+  try {
+    for (let s = 0; s < scenes.length; s++) {
+      if (token !== performanceToken) break;
+      const scene = scenes[s];
+      const words = getWords(scene);
+      currentDisplayText = scene;
+      lineDisplay.textContent = scene;
+
+      for (let i = 0; i < words.length; i++) {
+        if (token !== performanceToken) break;
+        const w = words[i];
+        analyze(w);
+        playWordSound(w, 0, audio, outputNode);
+        statusEl.textContent = `${record ? "Recording" : "Performing"} scene ${s + 1}/${scenes.length}: ${w}`;
+        await sleep(360);
+      }
+      await sleep(420);
+    }
+
+    statusEl.textContent = record ? "Finalizing video..." : "Performance complete.";
+    await sleep(700);
+  } finally {
+    try { await audio.close(); } catch {}
+    if (record) await stopRecorder();
+    isPerforming = false;
+    recordButton.disabled = false;
+    playButton.disabled = false;
+    sceneButton.disabled = false;
+    performAndSaveSceneButton.disabled = false;
+  }
+}
+
+function stopPerformance() {
+  performanceToken++;
+  isPerforming = false;
+  stopRecorder();
+  recordButton.disabled = false;
+  playButton.disabled = false;
+  sceneButton.disabled = false;
+  performAndSaveSceneButton.disabled = false;
+  statusEl.textContent = "Stopped.";
+}
+
+function download(filename, text, type="text/plain") {
+  const blob = new Blob([text], { type });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+}
+
+function captionText() {
+  const text = storyInput.value.trim();
+  return `${text}
+
+Made with Chromatype — a story that turns words into color, texture, motion, and sound.
+
+#Chromatype #DigitalStorytelling #VisualPoetry #SoundArt`;
+}
+
+function makeStoryboardText() {
+  const scenes = getScenes(storyInput.value.trim());
+  if (!scenes.length) return "No storyboard yet.";
+  return scenes.map((scene, i) => `Scene ${i + 1}: ${scene}`).join("\n\n");
+}
+
+copyButton.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(captionText());
+    statusEl.textContent = "Caption copied.";
+  } catch {
+    statusEl.textContent = "Copy failed. Select and copy manually.";
+  }
+});
+
+downloadTextButton.addEventListener("click", () => {
+  download("chromatype-story.txt", captionText());
+  statusEl.textContent = "Story text downloaded.";
+});
+
+downloadStoryboardButton.addEventListener("click", () => {
+  download("chromatype-storyboard.txt", makeStoryboardText());
+  statusEl.textContent = "Storyboard downloaded.";
+});
+
+downloadImageButton.addEventListener("click", () => {
+  const format = formatSelect.value;
+  const dims = getFormatDims(format);
+  const out = document.createElement("canvas");
+  out.width = dims[0];
+  out.height = dims[1];
+  const c = out.getContext("2d");
+  renderStoryFrame(c, out.width, out.height, currentDisplayText, t, format);
+
+  const a = document.createElement("a");
+  a.href = out.toDataURL("image/png");
+  a.download = `chromatype-${format}.png`;
+  a.click();
+  statusEl.textContent = "Visual card saved.";
+});
+
+playButton.addEventListener("click", () => performStory({ currentOnly: false, record: false }));
+sceneButton.addEventListener("click", () => performStory({ currentOnly: true, record: false }));
+recordButton.addEventListener("click", () => performStory({ currentOnly: false, record: true }));
+performAndSaveSceneButton.addEventListener("click", () => performStory({ currentOnly: true, record: true }));
+stopRecordButton.addEventListener("click", stopPerformance);
+
+clearButton.addEventListener("click", () => {
+  storyInput.value = "";
+  updateFromTyping();
+  lineDisplay.textContent = "Your living story will appear here.";
+  currentDisplayText = lineDisplay.textContent;
+  statusEl.textContent = "Cleared.";
+});
+
+loadSampleButton.addEventListener("click", () => {
+  storyInput.value = `The moon opened like a silver eye.
+Moss climbed the old stone door.
+Thunder wrote its name across the sky.
+A field of glass answered in blue fire.`;
+  updateFromTyping();
+  statusEl.textContent = "Sample loaded.";
+});
+
+storyInput.addEventListener("input", updateFromTyping);
+
+storyInput.value = `The moon opened like a silver eye.
+Moss climbed the old stone door.
+Thunder wrote its name across the sky.
+A field of glass answered in blue fire.`;
+updateFromTyping();
+</script>
+</body>
+</html>
