@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Chromatype — A Chromatype for living stories</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2309080b'/%3E%3Ccircle cx='22' cy='24' r='14' fill='%23ffcc7a'/%3E%3Ccircle cx='42' cy='40' r='16' fill='%237ac7ff' fill-opacity='.82'/%3E%3Cpath d='M17 45h30' stroke='%23f8efe2' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
 <style>
   :root {
     --ink: #f8efe2;
@@ -282,6 +283,18 @@
     font-size: .86rem;
     min-height: 1.2em;
     line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  button:disabled,
+  select:disabled {
+    cursor: not-allowed;
+    opacity: .52;
+    box-shadow: none;
+  }
+
+  button:disabled:active {
+    transform: none;
   }
 
   @media (max-width: 900px) {
@@ -381,7 +394,7 @@ Thunder wrote its name across the sky."></textarea>
 
 <script>
 const canvas = document.getElementById("stage");
-const ctx = canvas.getContext("2d");
+const ctx = canvas && typeof canvas.getContext === "function" ? canvas.getContext("2d") : null;
 const storyInput = document.getElementById("storyInput");
 const currentWord = document.getElementById("currentWord");
 const lineDisplay = document.getElementById("lineDisplay");
@@ -401,6 +414,149 @@ const loadSampleButton = document.getElementById("loadSampleButton");
 const recordButton = document.getElementById("recordButton");
 const stopRecordButton = document.getElementById("stopRecordButton");
 const formatSelect = document.getElementById("formatSelect");
+
+function getAudioContextConstructor() {
+  return window.AudioContext || window.webkitAudioContext || null;
+}
+
+function detectFeatures() {
+  const testCanvas = document.createElement("canvas");
+  let testCtx = null;
+  try {
+    testCtx = typeof testCanvas.getContext === "function" ? testCanvas.getContext("2d") : null;
+  } catch {}
+
+  const hasCanvas2d = Boolean(testCtx);
+  const hasBlob = typeof Blob === "function";
+  const hasUrlDownload = typeof URL !== "undefined" && typeof URL.createObjectURL === "function";
+  const hasAnchorDownload = typeof HTMLAnchorElement !== "undefined" && "download" in HTMLAnchorElement.prototype;
+  const hasCanvasImageExport = hasCanvas2d && typeof testCanvas.toDataURL === "function";
+  const hasCanvasVideoExport = hasCanvas2d && typeof testCanvas.captureStream === "function";
+  const hasMediaRecorder = typeof window.MediaRecorder === "function";
+  const AudioContext = getAudioContextConstructor();
+  const hasAudioStart = typeof AudioContext === "function";
+  const hasAudioRecordingDestination = Boolean(
+    AudioContext &&
+    AudioContext.prototype &&
+    typeof AudioContext.prototype.createMediaStreamDestination === "function"
+  );
+  const hasClipboard = Boolean(
+    navigator.clipboard &&
+    typeof navigator.clipboard.writeText === "function" &&
+    window.isSecureContext
+  );
+
+  return {
+    audioStart: hasAudioStart,
+    canvasExport: hasCanvasImageExport && hasBlob && hasUrlDownload && hasAnchorDownload,
+    videoExport: hasCanvasVideoExport && hasBlob && hasUrlDownload && hasAnchorDownload,
+    clipboard: hasClipboard,
+    recording: hasCanvasVideoExport && hasMediaRecorder && hasAudioStart && hasAudioRecordingDestination && hasBlob && hasUrlDownload && hasAnchorDownload
+  };
+}
+
+const featureSupport = detectFeatures();
+const unsupportedMessages = {
+  audioStart: "Audio playback is unavailable in this browser.",
+  canvasExport: "Canvas image export is unavailable in this browser.",
+  videoExport: "Canvas video export is unavailable in this browser.",
+  clipboard: "Clipboard copying requires the Clipboard API on a secure page.",
+  recording: "Recording requires audio, MediaRecorder, canvas video capture, and browser downloads."
+};
+const buttonDefaults = new Map([
+  playButton,
+  sceneButton,
+  recordButton,
+  stopRecordButton,
+  downloadImageButton,
+  performAndSaveSceneButton,
+  copyButton
+].map(button => [button, {
+  label: button.textContent,
+  title: button.getAttribute("title")
+}]));
+const featureControls = [
+  { button: playButton, feature: "audioStart", label: "audio unavailable" },
+  { button: sceneButton, feature: "audioStart", label: "audio unavailable" },
+  { button: stopRecordButton, supported: () => featureSupport.audioStart || featureSupport.recording, label: "stop unavailable", reason: unsupportedMessages.audioStart },
+  { button: recordButton, feature: "recording", label: "recording unavailable" },
+  { button: performAndSaveSceneButton, feature: "recording", label: "recording unavailable" },
+  { button: downloadImageButton, feature: "canvasExport", label: "export unavailable" },
+  { button: copyButton, feature: "clipboard", label: "copy unavailable" }
+];
+const busyControls = new Set([playButton, sceneButton, recordButton, performAndSaveSceneButton]);
+
+function featureIsSupported(rule) {
+  return typeof rule.supported === "function" ? rule.supported() : Boolean(featureSupport[rule.feature]);
+}
+
+function refreshActionAvailability() {
+  featureControls.forEach(rule => {
+    const { button } = rule;
+    const defaults = buttonDefaults.get(button);
+    const supported = featureIsSupported(rule);
+
+    if (!supported) {
+      button.disabled = true;
+      button.textContent = rule.label;
+      button.title = rule.reason || unsupportedMessages[rule.feature];
+      button.setAttribute("aria-disabled", "true");
+      return;
+    }
+
+    button.textContent = defaults.label;
+    if (defaults.title) button.title = defaults.title;
+    else button.removeAttribute("title");
+    button.removeAttribute("aria-disabled");
+    button.disabled = isPerforming && busyControls.has(button);
+  });
+}
+
+function getUnsupportedSummary() {
+  const messages = [];
+  if (!featureSupport.audioStart) messages.push(unsupportedMessages.audioStart);
+  if (!featureSupport.recording) messages.push(unsupportedMessages.recording);
+  if (!featureSupport.canvasExport) messages.push(unsupportedMessages.canvasExport);
+  if (!featureSupport.clipboard) messages.push(unsupportedMessages.clipboard);
+  return messages.join(" ");
+}
+
+function showInitialCompatibilityStatus() {
+  const summary = getUnsupportedSummary();
+  if (summary) statusEl.textContent = `Unsupported here: ${summary}`;
+}
+
+function requireFeature(feature) {
+  if (featureSupport[feature]) return true;
+  statusEl.textContent = unsupportedMessages[feature];
+  return false;
+}
+
+function markFeatureUnsupported(feature, message) {
+  featureSupport[feature] = false;
+  if (feature === "audioStart" || feature === "videoExport") {
+    featureSupport.recording = false;
+  }
+  refreshActionAvailability();
+  statusEl.textContent = message || unsupportedMessages[feature];
+}
+
+async function createStartedAudioContext() {
+  const AudioContext = getAudioContextConstructor();
+  if (!AudioContext) throw new Error(unsupportedMessages.audioStart);
+
+  const audio = new AudioContext();
+  try {
+    if (audio.state === "suspended" && typeof audio.resume === "function") {
+      await audio.resume();
+    }
+  } catch (error) {
+    try { await audio.close(); } catch {}
+    throw error;
+  }
+
+  return audio;
+}
 
 let W, H, t = 0;
 let state = {
@@ -424,11 +580,13 @@ let currentDisplayText = "Your living story will appear here.";
 let lastRecordedBlob = null;
 
 function resize() {
-  W = canvas.width = window.innerWidth * devicePixelRatio;
-  H = canvas.height = window.innerHeight * devicePixelRatio;
+  if (!ctx) return;
+  const ratio = window.devicePixelRatio || 1;
+  W = canvas.width = window.innerWidth * ratio;
+  H = canvas.height = window.innerHeight * ratio;
   canvas.style.width = window.innerWidth + "px";
   canvas.style.height = window.innerHeight + "px";
-  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   W = window.innerWidth;
   H = window.innerHeight;
 }
@@ -493,6 +651,7 @@ function analyze(word) {
 }
 
 function drawField(targetCtx, width, height, localT, scale=1) {
+  if (!targetCtx) return;
   const grad = targetCtx.createLinearGradient(0, 0, width, height);
   grad.addColorStop(0, `hsl(${state.hue}, ${state.saturation}%, ${Math.max(10, state.lightness - 24)}%)`);
   grad.addColorStop(.52, `hsl(${state.hue2}, ${Math.min(96, state.saturation + 12)}%, ${state.lightness}%)`);
@@ -637,7 +796,7 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke) {
 
 function animate() {
   t += 0.008 + state.energy * 0.016;
-  drawField(ctx, W, H, t, 1);
+  if (ctx) drawField(ctx, W, H, t, 1);
 
   if (activeRecorder && activeRecorder.ctx) {
     renderStoryFrame(
@@ -670,7 +829,8 @@ function buildAudioChain(audioCtx) {
 }
 
 function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const AudioContext = getAudioContextConstructor();
+  if (!AudioContext) return;
   const audio = audioCtx || new AudioContext();
   const clean = cleanWord(word) || "story";
   const h = hashWord(clean);
@@ -726,16 +886,17 @@ function getFormatDims(format) {
   }[format] || [1920, 1080];
 }
 
-async function startRecorder(format) {
+async function startRecorder(format, audio) {
+  if (!featureSupport.recording) throw new Error(unsupportedMessages.recording);
+  if (!audio) throw new Error(unsupportedMessages.audioStart);
+
   const [rw, rh] = getFormatDims(format);
   const recordCanvas = document.createElement("canvas");
   recordCanvas.width = rw;
   recordCanvas.height = rh;
   const rctx = recordCanvas.getContext("2d");
+  if (!rctx) throw new Error(unsupportedMessages.canvasExport);
 
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  const audio = new AudioContext();
-  await audio.resume();
   const chain = buildAudioChain(audio);
 
   const stream = recordCanvas.captureStream(30);
@@ -748,7 +909,7 @@ async function startRecorder(format) {
     "video/webm"
   ];
   for (const type of mimeOptions) {
-    if (MediaRecorder.isTypeSupported(type)) {
+    if (typeof MediaRecorder.isTypeSupported !== "function" || MediaRecorder.isTypeSupported(type)) {
       mimeType = type;
       break;
     }
@@ -760,15 +921,13 @@ async function startRecorder(format) {
     if (e.data && e.data.size > 0) chunks.push(e.data);
   };
 
-  const stopped = new Promise(resolve => {
+  const stopped = new Promise((resolve, reject) => {
+    recorder.onerror = event => reject(event.error || new Error("Recording failed."));
     recorder.onstop = () => {
       const blob = new Blob(chunks, { type: mimeType || "video/webm" });
       lastRecordedBlob = blob;
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `chromatype-${format}.webm`;
-      a.click();
+      triggerDownload(url, `chromatype-${format}.webm`);
       setTimeout(() => URL.revokeObjectURL(url), 3000);
       resolve(blob);
     };
@@ -778,7 +937,6 @@ async function startRecorder(format) {
 
   activeRecorder = {
     recorder,
-    audio,
     audioOut: chain.masterGain,
     canvas: recordCanvas,
     ctx: rctx,
@@ -798,10 +956,6 @@ async function stopRecorder() {
   try {
     if (local.recorder.state !== "inactive") local.recorder.stop();
   } catch {}
-  try {
-    await sleep(250);
-    await local.audio.close();
-  } catch {}
   const blob = await local.stopped;
   statusEl.textContent = "Recording saved as .webm";
   return blob;
@@ -809,6 +963,9 @@ async function stopRecorder() {
 
 async function performStory(options = {}) {
   const { currentOnly = false, record = false } = options;
+  if (!requireFeature("audioStart")) return;
+  if (record && !requireFeature("recording")) return;
+
   const text = storyInput.value.trim();
   if (!text) {
     statusEl.textContent = "Write a story first.";
@@ -821,23 +978,19 @@ async function performStory(options = {}) {
 
   const token = ++performanceToken;
   isPerforming = true;
-  recordButton.disabled = true;
-  playButton.disabled = true;
-  sceneButton.disabled = true;
-  performAndSaveSceneButton.disabled = true;
+  refreshActionAvailability();
 
   const scenes = currentOnly ? [getScenes(text).slice(-1)[0]] : getScenes(text);
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  const audio = new AudioContext();
-  await audio.resume();
-
-  let outputNode = audio.destination;
-  if (record) {
-    const rec = await startRecorder(formatSelect.value);
-    outputNode = rec.audioOut;
-  }
+  let audio = null;
 
   try {
+    audio = await createStartedAudioContext();
+    let outputNode = audio.destination;
+    if (record) {
+      const rec = await startRecorder(formatSelect.value, audio);
+      outputNode = rec.audioOut;
+    }
+
     for (let s = 0; s < scenes.length; s++) {
       if (token !== performanceToken) break;
       const scene = scenes[s];
@@ -858,35 +1011,47 @@ async function performStory(options = {}) {
 
     statusEl.textContent = record ? "Finalizing video..." : "Performance complete.";
     await sleep(700);
+  } catch (error) {
+    const failedFeature = !audio ? "audioStart" : record ? "recording" : "audioStart";
+    const failureMessage = record
+      ? "Recording could not start in this browser."
+      : "Audio could not start in this browser.";
+    markFeatureUnsupported(failedFeature, failureMessage);
   } finally {
-    try { await audio.close(); } catch {}
-    if (record) await stopRecorder();
+    if (record) {
+      try { await stopRecorder(); } catch {}
+    }
+    try { if (audio) await audio.close(); } catch {}
     isPerforming = false;
-    recordButton.disabled = false;
-    playButton.disabled = false;
-    sceneButton.disabled = false;
-    performAndSaveSceneButton.disabled = false;
+    refreshActionAvailability();
   }
 }
 
 function stopPerformance() {
   performanceToken++;
   isPerforming = false;
-  stopRecorder();
-  recordButton.disabled = false;
-  playButton.disabled = false;
-  sceneButton.disabled = false;
-  performAndSaveSceneButton.disabled = false;
+  stopRecorder().catch(() => {
+    statusEl.textContent = "Recording could not be finalized in this browser.";
+  });
+  refreshActionAvailability();
   statusEl.textContent = "Stopped.";
+}
+
+function triggerDownload(url, filename) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 function download(filename, text, type="text/plain") {
   const blob = new Blob([text], { type });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  const url = URL.createObjectURL(blob);
+  triggerDownload(url, filename);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
 }
 
 function captionText() {
@@ -905,11 +1070,12 @@ function makeStoryboardText() {
 }
 
 copyButton.addEventListener("click", async () => {
+  if (!requireFeature("clipboard")) return;
   try {
     await navigator.clipboard.writeText(captionText());
     statusEl.textContent = "Caption copied.";
   } catch {
-    statusEl.textContent = "Copy failed. Select and copy manually.";
+    markFeatureUnsupported("clipboard", "Clipboard write was blocked here. Download the story text instead.");
   }
 });
 
@@ -924,6 +1090,7 @@ downloadStoryboardButton.addEventListener("click", () => {
 });
 
 downloadImageButton.addEventListener("click", () => {
+  if (!requireFeature("canvasExport")) return;
   const format = formatSelect.value;
   const dims = getFormatDims(format);
   const out = document.createElement("canvas");
@@ -932,11 +1099,13 @@ downloadImageButton.addEventListener("click", () => {
   const c = out.getContext("2d");
   renderStoryFrame(c, out.width, out.height, currentDisplayText, t, format);
 
-  const a = document.createElement("a");
-  a.href = out.toDataURL("image/png");
-  a.download = `chromatype-${format}.png`;
-  a.click();
-  statusEl.textContent = "Visual card saved.";
+  try {
+    const url = out.toDataURL("image/png");
+    triggerDownload(url, `chromatype-${format}.png`);
+    statusEl.textContent = "Visual card saved.";
+  } catch {
+    markFeatureUnsupported("canvasExport", "Canvas image export failed in this browser.");
+  }
 });
 
 playButton.addEventListener("click", () => performStory({ currentOnly: false, record: false }));
@@ -969,6 +1138,8 @@ Moss climbed the old stone door.
 Thunder wrote its name across the sky.
 A field of glass answered in blue fire.`;
 updateFromTyping();
+refreshActionAvailability();
+showInitialCompatibilityStatus();
 </script>
 </body>
 </html>
