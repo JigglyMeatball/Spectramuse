@@ -392,7 +392,7 @@ Thunder wrote its name across the sky."></textarea>
           <option value="velvetPad">Velvet Pad</option>
           <option value="typewriterPercussion">Typewriter Percussion</option>
           <option value="oceanWash">Ocean Wash</option>
-          <option value="stormChoir">Storm Choir</option>
+          <option value="auroraChoir">Aurora Choir</option>
         </select>
       </div>
     </div>
@@ -447,7 +447,7 @@ const SOUND_MODES = {
   velvetPad: { label: "Velvet Pad", descriptor: "velvet pad" },
   typewriterPercussion: { label: "Typewriter Percussion", descriptor: "tap and tone" },
   oceanWash: { label: "Ocean Wash", descriptor: "filtered ocean wash" },
-  stormChoir: { label: "Storm Choir", descriptor: "dark layered choir" }
+  auroraChoir: { label: "Aurora Choir", descriptor: "soft glowing choir" }
 };
 
 function getAudioContextConstructor() {
@@ -924,7 +924,7 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
   chars.forEach((ch, i) => {
     const code = Math.max(1, ch.charCodeAt(0) - 96);
     const pitch = root + code * (softFeel ? 5 : 9) + (i % 5) * (24 + state.sharpness * 18);
-    const start = now + i * (soundMode === "deepDrone" || soundMode === "velvetPad" || soundMode === "oceanWash" || soundMode === "stormChoir" ? .085 : .045);
+    const start = now + i * (soundMode === "deepDrone" || soundMode === "velvetPad" || soundMode === "oceanWash" || soundMode === "auroraChoir" ? .085 : .045);
 
     if (soundMode === "museBell") {
       const osc = audio.createOscillator();
@@ -1069,26 +1069,39 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
       lfo.stop(end);
       longestEnd = Math.max(longestEnd, end);
     } else {
-      const low = audio.createOscillator();
-      const mid = audio.createOscillator();
+      const rootTone = audio.createOscillator();
+      const fifth = audio.createOscillator();
+      const octave = audio.createOscillator();
+      const third = audio.createOscillator();
       const gain = audio.createGain();
       const filter = audio.createBiquadFilter();
-      low.type = "triangle";
-      mid.type = "sine";
-      low.frequency.setValueAtTime(pitch * .42, start);
-      mid.frequency.setValueAtTime(pitch * .63 + code * 2, start);
+      rootTone.type = "sine";
+      fifth.type = "triangle";
+      octave.type = "sine";
+      third.type = "sine";
+      const choirRoot = Math.max(170, Math.min(420, pitch * .64));
+      rootTone.frequency.setValueAtTime(choirRoot, start);
+      fifth.frequency.setValueAtTime(choirRoot * 1.5, start);
+      octave.frequency.setValueAtTime(choirRoot * 2, start);
+      third.frequency.setValueAtTime(choirRoot * 1.25, start);
       filter.type = "lowpass";
-      filter.frequency.setValueAtTime(360 + state.lightness * 9, start);
-      filter.Q.value = 1.4 + state.energy * 1.8;
-      low.connect(filter);
-      mid.connect(filter);
+      filter.frequency.setValueAtTime(700 + state.lightness * 10 + state.softness * 180, start);
+      filter.Q.value = 0.8 + state.softness * 1.2;
+      rootTone.connect(filter);
+      fifth.connect(filter);
+      octave.connect(filter);
+      third.connect(filter);
       filter.connect(gain);
       connectSoundOutput(gain, audioOut, audio);
-      const end = shapeGain(gain, start, .09, .32, .85 + state.softness * .25, .024 + state.energy * .024);
-      low.start(start);
-      mid.start(start);
-      low.stop(end);
-      mid.stop(end);
+      const end = shapeGain(gain, start, .18 + state.softness * .08, .28, .72 + state.softness * .28, .016 + state.energy * .012);
+      rootTone.start(start);
+      fifth.start(start);
+      octave.start(start);
+      third.start(start);
+      rootTone.stop(end);
+      fifth.stop(end);
+      octave.stop(end);
+      third.stop(end);
       longestEnd = Math.max(longestEnd, end);
     }
   });
