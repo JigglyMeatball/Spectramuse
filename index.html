@@ -53,7 +53,7 @@
     position: relative;
     z-index: 2;
     width: min(1180px, calc(100vw - 28px));
-    height: min(93vh, 940px);
+    height: min(94vh, 940px);
     margin: 3.5vh auto;
     padding: 22px;
     border: 1px solid rgba(255,255,255,.18);
@@ -62,7 +62,7 @@
     box-shadow: 0 35px 120px rgba(0,0,0,.62), inset 0 0 50px rgba(255,255,255,.04);
     backdrop-filter: blur(12px);
     display: grid;
-    grid-template-rows: auto 1fr auto auto;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
     gap: 14px;
   }
 
@@ -71,12 +71,13 @@
     justify-content: space-between;
     gap: 18px;
     align-items: flex-start;
+    position: relative;
   }
 
   h1 {
     margin: 0;
-    font-size: clamp(1.8rem, 4.8vw, 4.6rem);
-    line-height: .9;
+    font-size: clamp(2.1rem, 4.2vw, 4rem);
+    line-height: .95;
     letter-spacing: .02em;
     text-shadow: 0 0 22px rgba(255,255,255,.14);
   }
@@ -88,18 +89,51 @@
     line-height: 1.4;
   }
 
-  .badge {
-    border: 1px solid rgba(255,255,255,.18);
-    border-radius: 999px;
-    padding: 9px 13px;
-    font-size: .82rem;
-    color: rgba(248,239,226,.78);
-    white-space: nowrap;
+  .setup-wrap {
+    position: relative;
+    z-index: 8;
+    margin-left: auto;
+  }
+
+  .setup-button {
+    min-width: 112px;
+  }
+
+  .setup-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(330px, calc(100vw - 48px));
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+    border: 1px solid color-mix(in srgb, var(--accent), rgba(255,255,255,.16) 58%);
+    border-radius: 18px;
+    background: rgba(12,10,17,.94);
+    box-shadow: 0 22px 70px rgba(0,0,0,.48), inset 0 0 35px rgba(255,255,255,.035);
+    backdrop-filter: blur(14px);
+  }
+
+  .setup-dropdown[hidden] {
+    display: none;
+  }
+
+  .setup-field {
+    display: grid;
+    gap: 7px;
+  }
+
+  .setup-field select {
+    width: 100%;
+  }
+
+  .setup-field .label {
+    color: var(--accent);
   }
 
   .workspace {
     display: grid;
-    grid-template-columns: minmax(0, 1.08fr) minmax(320px, .92fr);
+    grid-template-columns: minmax(0, 1.04fr) minmax(320px, .96fr);
     gap: 14px;
     min-height: 0;
   }
@@ -169,7 +203,9 @@
 
   .viewer {
     display: grid;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 16px;
     min-height: 0;
     overflow: hidden;
   }
@@ -181,6 +217,8 @@
     place-items: center;
     padding: 28px;
     overflow: hidden;
+    border-radius: 16px;
+    background: rgba(0,0,0,.16);
   }
 
   .story-card::before {
@@ -212,15 +250,7 @@
     white-space: pre-wrap;
   }
 
-  .export-strip {
-    padding: 14px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    border-top: 1px solid rgba(255,255,255,.10);
-  }
-
-  .panels {
+  .preview-readouts {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 10px;
@@ -237,20 +267,20 @@
     line-height: 1.35;
   }
 
-  .sound-mode-control {
-    margin-top: 12px;
-    display: grid;
-    gap: 7px;
-  }
-
-  .sound-mode-control select {
-    width: 100%;
-  }
-
-  .buttons {
+  .actions {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 9px;
+  }
+
+  .statusbar {
+    min-height: 46px;
+    border-radius: 14px;
+    padding: 12px 14px;
+    background: rgba(0,0,0,.18);
+    border: 1px solid rgba(255,255,255,.10);
+    display: flex;
+    align-items: center;
   }
 
   button, select {
@@ -311,12 +341,19 @@
     body { overflow: auto; }
     .studio { height: auto; margin: 14px auto; }
     .workspace { grid-template-columns: 1fr; }
-    .panels { grid-template-columns: 1fr; }
-    .buttons { grid-template-columns: 1fr 1fr; }
-    .topbar { flex-direction: column; }
-    .export-strip { grid-template-columns: 1fr; }
+    .preview-readouts { grid-template-columns: 1fr; }
+    .actions { grid-template-columns: 1fr 1fr; }
+    .topbar { align-items: flex-start; }
     .story-card { min-height: 340px; }
     textarea { min-height: 360px; }
+  }
+
+  @media (max-width: 540px) {
+    .topbar { flex-direction: column; }
+    .setup-wrap { width: 100%; margin-left: 0; }
+    .setup-button { width: 100%; }
+    .setup-dropdown { left: 0; right: auto; width: 100%; }
+    .actions { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -329,16 +366,46 @@
     <div>
       <h1>SpectraMuse</h1>
       <div class="subcopy">
-        Where stories become color, sound, and motion.<br>
-        A living story engine for sensory storytelling.
+        Where stories become color, sound, and motion.
       </div>
     </div>
-    <div class="badge">Where stories become color, sound, and motion.</div>
+    <div class="setup-wrap">
+      <button id="setupButton" class="setup-button" type="button" aria-expanded="false" aria-controls="setupDropdown">Setup</button>
+      <div id="setupDropdown" class="setup-dropdown" hidden>
+        <div class="setup-field">
+          <label class="label" for="moodPresetSelect">Mood Preset</label>
+          <select id="moodPresetSelect" title="Choose mood preset">
+            <option value="storyReactive">Story Reactive</option>
+          </select>
+        </div>
+        <div class="setup-field">
+          <label class="label" for="soundModeSelect">Sound Mode</label>
+          <select id="soundModeSelect" title="Choose generated sound style">
+            <option value="museBell">Muse Bell</option>
+            <option value="deepDrone">Deep Drone</option>
+            <option value="crystalPluck">Crystal Pluck</option>
+            <option value="staticPulse">Static Pulse</option>
+            <option value="velvetPad">Velvet Pad</option>
+            <option value="typewriterPercussion">Typewriter Percussion</option>
+            <option value="oceanWash">Ocean Wash</option>
+            <option value="auroraChoir">Aurora Choir</option>
+          </select>
+        </div>
+        <div class="setup-field">
+          <label class="label" for="formatSelect">Output Format</label>
+          <select id="formatSelect" title="Choose output shape">
+            <option value="vertical">Vertical 9:16 social video frame</option>
+            <option value="square">Square post frame</option>
+            <option value="wide">Wide YouTube frame</option>
+          </select>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section class="workspace">
     <div class="editor">
-      <div class="label">Story keys</div>
+      <div class="label">Write</div>
       <textarea id="storyInput" placeholder="Type your story here...
 
 Example:
@@ -351,67 +418,47 @@ Thunder wrote its name across the sky."></textarea>
           <div class="label">Current sensory word</div>
           <div class="current-word" id="currentWord">waiting</div>
         </div>
-        <div class="status" id="status">Ready.</div>
       </div>
     </div>
 
     <div class="viewer">
+      <div class="label">Preview</div>
       <div class="story-card" id="storyCard">
         <div class="line-display" id="lineDisplay">Your living story will appear here.</div>
       </div>
-      <div class="export-strip">
-        <select id="formatSelect" title="Choose output shape">
-          <option value="vertical">Vertical 9:16 social video frame</option>
-          <option value="square">Square post frame</option>
-          <option value="wide">Wide YouTube frame</option>
-        </select>
-        <button id="copyButton" class="secondary">copy caption</button>
+      <div class="preview-readouts">
+        <div class="panel">
+          <div class="label">Color</div>
+          <div class="value" id="colorName">waiting for ink</div>
+        </div>
+        <div class="panel">
+          <div class="label">Texture</div>
+          <div class="value" id="textureName">silent paper</div>
+        </div>
+        <div class="panel">
+          <div class="label">Sound</div>
+          <div class="value" id="soundName">unstruck key</div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="panels">
-    <div class="panel">
-      <div class="label">Color</div>
-      <div class="value" id="colorName">waiting for ink</div>
-    </div>
-    <div class="panel">
-      <div class="label">Texture</div>
-      <div class="value" id="textureName">silent paper</div>
-    </div>
-    <div class="panel">
-      <div class="label">Sound</div>
-      <div class="value" id="soundName">unstruck key</div>
-      <div class="sound-mode-control">
-        <label class="label" for="soundModeSelect">Sound Mode</label>
-        <select id="soundModeSelect" title="Choose generated sound style">
-          <option value="museBell">Muse Bell</option>
-          <option value="deepDrone">Deep Drone</option>
-          <option value="crystalPluck">Crystal Pluck</option>
-          <option value="staticPulse">Static Pulse</option>
-          <option value="velvetPad">Velvet Pad</option>
-          <option value="typewriterPercussion">Typewriter Percussion</option>
-          <option value="oceanWash">Ocean Wash</option>
-          <option value="auroraChoir">Aurora Choir</option>
-        </select>
-      </div>
-    </div>
+  <section class="actions">
+    <button id="playButton">Preview Story</button>
+    <button id="sceneButton" class="secondary">Preview Scene</button>
+    <button id="recordButton" class="record">Record Story</button>
+    <button id="performAndSaveSceneButton" class="secondary">Record Scene</button>
+    <button id="downloadImageButton" class="secondary">Save Image</button>
+    <button id="copyButton" class="secondary">Copy Caption</button>
+    <button id="downloadTextButton" class="secondary">Download Story</button>
+    <button id="downloadStoryboardButton" class="secondary">Storyboard</button>
+    <button id="loadSampleButton" class="secondary">Load Sample</button>
+    <button id="clearButton" class="secondary">Clear Story</button>
+    <button id="stopRecordButton" class="stop secondary" hidden>stop recording</button>
   </section>
 
-  <section class="buttons">
-    <button id="playButton">perform story</button>
-    <button id="sceneButton" class="secondary">perform current scene</button>
-    <button id="recordButton" class="record">record story video</button>
-    <button id="stopRecordButton" class="stop secondary">stop recording</button>
-    <button id="downloadImageButton" class="secondary">save visual card</button>
-  </section>
-
-  <section class="buttons">
-    <button id="downloadTextButton" class="secondary">download story</button>
-    <button id="downloadStoryboardButton" class="secondary">download storyboard</button>
-    <button id="performAndSaveSceneButton" class="secondary">record current scene</button>
-    <button id="clearButton" class="secondary">clear story</button>
-    <button id="loadSampleButton" class="secondary">load sample</button>
+  <section class="statusbar">
+    <div class="status" id="status">Ready.</div>
   </section>
 </main>
 
@@ -438,6 +485,9 @@ const recordButton = document.getElementById("recordButton");
 const stopRecordButton = document.getElementById("stopRecordButton");
 const formatSelect = document.getElementById("formatSelect");
 const soundModeSelect = document.getElementById("soundModeSelect");
+const setupButton = document.getElementById("setupButton");
+const setupDropdown = document.getElementById("setupDropdown");
+const moodPresetSelect = document.getElementById("moodPresetSelect");
 
 const SOUND_MODES = {
   museBell: { label: "Muse Bell", descriptor: "soft bell" },
@@ -574,6 +624,27 @@ function markFeatureUnsupported(feature, message) {
   }
   refreshActionAvailability();
   statusEl.textContent = message || unsupportedMessages[feature];
+}
+
+function isSetupDropdownOpen() {
+  return setupDropdown && !setupDropdown.hidden;
+}
+
+function openSetupDropdown() {
+  if (!setupDropdown || !setupButton) return;
+  setupDropdown.hidden = false;
+  setupButton.setAttribute("aria-expanded", "true");
+}
+
+function closeSetupDropdown() {
+  if (!setupDropdown || !setupButton) return;
+  setupDropdown.hidden = true;
+  setupButton.setAttribute("aria-expanded", "false");
+}
+
+function toggleSetupDropdown() {
+  if (isSetupDropdownOpen()) closeSetupDropdown();
+  else openSetupDropdown();
 }
 
 async function createStartedAudioContext() {
@@ -1355,6 +1426,21 @@ sceneButton.addEventListener("click", () => performStory({ currentOnly: true, re
 recordButton.addEventListener("click", () => performStory({ currentOnly: false, record: true }));
 performAndSaveSceneButton.addEventListener("click", () => performStory({ currentOnly: true, record: true }));
 stopRecordButton.addEventListener("click", stopPerformance);
+setupButton.addEventListener("click", event => {
+  event.stopPropagation();
+  toggleSetupDropdown();
+});
+setupDropdown.addEventListener("click", event => {
+  event.stopPropagation();
+});
+document.addEventListener("click", event => {
+  if (!isSetupDropdownOpen()) return;
+  if (setupDropdown.contains(event.target) || setupButton.contains(event.target)) return;
+  closeSetupDropdown();
+});
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && isSetupDropdownOpen()) closeSetupDropdown();
+});
 
 clearButton.addEventListener("click", () => {
   storyInput.value = "";
