@@ -237,6 +237,16 @@
     line-height: 1.35;
   }
 
+  .sound-mode-control {
+    margin-top: 12px;
+    display: grid;
+    gap: 7px;
+  }
+
+  .sound-mode-control select {
+    width: 100%;
+  }
+
   .buttons {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -372,6 +382,19 @@ Thunder wrote its name across the sky."></textarea>
     <div class="panel">
       <div class="label">Sound</div>
       <div class="value" id="soundName">unstruck key</div>
+      <div class="sound-mode-control">
+        <label class="label" for="soundModeSelect">Sound Mode</label>
+        <select id="soundModeSelect" title="Choose generated sound style">
+          <option value="museBell">Muse Bell</option>
+          <option value="deepDrone">Deep Drone</option>
+          <option value="crystalPluck">Crystal Pluck</option>
+          <option value="staticPulse">Static Pulse</option>
+          <option value="velvetPad">Velvet Pad</option>
+          <option value="typewriterPercussion">Typewriter Percussion</option>
+          <option value="oceanWash">Ocean Wash</option>
+          <option value="stormChoir">Storm Choir</option>
+        </select>
+      </div>
     </div>
   </section>
 
@@ -414,6 +437,18 @@ const loadSampleButton = document.getElementById("loadSampleButton");
 const recordButton = document.getElementById("recordButton");
 const stopRecordButton = document.getElementById("stopRecordButton");
 const formatSelect = document.getElementById("formatSelect");
+const soundModeSelect = document.getElementById("soundModeSelect");
+
+const SOUND_MODES = {
+  museBell: { label: "Muse Bell", descriptor: "soft bell" },
+  deepDrone: { label: "Deep Drone", descriptor: "low sustained drone" },
+  crystalPluck: { label: "Crystal Pluck", descriptor: "bright crystal pluck" },
+  staticPulse: { label: "Static Pulse", descriptor: "electric pulse" },
+  velvetPad: { label: "Velvet Pad", descriptor: "velvet pad" },
+  typewriterPercussion: { label: "Typewriter Percussion", descriptor: "tap and tone" },
+  oceanWash: { label: "Ocean Wash", descriptor: "filtered ocean wash" },
+  stormChoir: { label: "Storm Choir", descriptor: "dark layered choir" }
+};
 
 function getAudioContextConstructor() {
   return window.AudioContext || window.webkitAudioContext || null;
@@ -569,6 +604,8 @@ let state = {
   softness: .5,
   sharpness: .4,
   texture: "paper grain",
+  soundRoot: 320,
+  soundTone: "warm drone",
   mode: 0
 };
 
@@ -638,16 +675,32 @@ function analyze(word) {
 
   const textures = ["velvet bloom", "liquid marble", "electric static", "bark rings", "glass ripples", "star-salt dust"];
   state.texture = textures[state.mode];
+  state.soundRoot = 180 + (h % 520);
+  state.soundTone = sharp > soft ? "bright pluck" : "warm drone";
 
   const colorWords = ["ember", "copper", "moss", "lagoon", "violet", "rose", "honey", "ink"];
   colorName.textContent = `${colorWords[Math.floor(state.hue / 45) % colorWords.length]} field — hsl(${state.hue}, ${Math.round(state.saturation)}%, ${Math.round(state.lightness)}%)`;
   textureName.textContent = `${state.texture}, ${state.softness > .45 ? "soft-edged" : "hard-edged"} motion`;
-  soundName.textContent = `${sharp > soft ? "bright pluck" : "warm drone"} / ${Math.round(180 + (h % 520))} Hz root`;
+  updateSoundReadout();
   currentWord.textContent = clean;
 
   document.documentElement.style.setProperty("--accent", `hsl(${state.hue2}, 92%, 68%)`);
   document.documentElement.style.setProperty("--hue", state.hue);
   document.documentElement.style.setProperty("--hue2", state.hue2);
+}
+
+function getSelectedSoundMode() {
+  const key = soundModeSelect ? soundModeSelect.value : "museBell";
+  return SOUND_MODES[key] ? key : "museBell";
+}
+
+function getSelectedSoundModeInfo() {
+  return SOUND_MODES[getSelectedSoundMode()];
+}
+
+function updateSoundReadout() {
+  const mode = getSelectedSoundModeInfo();
+  soundName.textContent = `${mode.label}: ${mode.descriptor}, ${state.soundTone} / ${Math.round(state.soundRoot)} Hz root`;
 }
 
 function drawField(targetCtx, width, height, localT, scale=1) {
@@ -828,6 +881,33 @@ function buildAudioChain(audioCtx) {
   return { masterGain, mediaDestination };
 }
 
+function connectSoundOutput(node, audioOut, audio) {
+  node.connect(audioOut || audio.destination);
+}
+
+function shapeGain(gain, start, attack, hold, release, peak) {
+  const end = start + attack + hold + release;
+  gain.gain.cancelScheduledValues(start);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.linearRampToValueAtTime(peak, start + attack);
+  gain.gain.setValueAtTime(peak, start + attack + hold);
+  gain.gain.exponentialRampToValueAtTime(0.0001, end);
+  return end;
+}
+
+function createNoiseSource(audio, duration) {
+  const sampleRate = audio.sampleRate || 44100;
+  const frameCount = Math.max(1, Math.floor(sampleRate * duration));
+  const buffer = audio.createBuffer(1, frameCount, sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < frameCount; i++) {
+    data[i] = Math.random() * 2 - 1;
+  }
+  const source = audio.createBufferSource();
+  source.buffer = buffer;
+  return source;
+}
+
 function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
   const AudioContext = getAudioContextConstructor();
   if (!AudioContext) return;
@@ -837,34 +917,183 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
   const root = 140 + (h % 520);
   const now = audio.currentTime + offset;
   const chars = clean.split("").slice(0, 14);
+  const soundMode = getSelectedSoundMode();
+  const softFeel = state.softness > state.sharpness;
+  let longestEnd = now;
 
   chars.forEach((ch, i) => {
     const code = Math.max(1, ch.charCodeAt(0) - 96);
-    const osc = audio.createOscillator();
-    const gain = audio.createGain();
-    const filter = audio.createBiquadFilter();
+    const pitch = root + code * (softFeel ? 5 : 9) + (i % 5) * (24 + state.sharpness * 18);
+    const start = now + i * (soundMode === "deepDrone" || soundMode === "velvetPad" || soundMode === "oceanWash" || soundMode === "stormChoir" ? .085 : .045);
 
-    osc.type = state.sharpness > state.softness ? "triangle" : "sine";
-    osc.frequency.setValueAtTime(root + code * 8 + (i % 5) * 32, now + i * .045);
+    if (soundMode === "museBell") {
+      const osc = audio.createOscillator();
+      const overtone = audio.createOscillator();
+      const gain = audio.createGain();
+      const filter = audio.createBiquadFilter();
+      osc.type = "sine";
+      overtone.type = "triangle";
+      osc.frequency.setValueAtTime(pitch * 1.6, start);
+      overtone.frequency.setValueAtTime(pitch * 2.41, start);
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(900 + state.lightness * 16 + code * 18, start);
+      filter.Q.value = 4 + state.softness * 4;
+      osc.connect(filter);
+      overtone.connect(filter);
+      filter.connect(gain);
+      connectSoundOutput(gain, audioOut, audio);
+      const end = shapeGain(gain, start, .018, .02, .62 + state.softness * .25, .025 + state.energy * .025);
+      osc.start(start);
+      overtone.start(start);
+      osc.stop(end);
+      overtone.stop(end);
+      longestEnd = Math.max(longestEnd, end);
+    } else if (soundMode === "deepDrone") {
+      const osc = audio.createOscillator();
+      const sub = audio.createOscillator();
+      const gain = audio.createGain();
+      const filter = audio.createBiquadFilter();
+      osc.type = softFeel ? "sine" : "triangle";
+      sub.type = "sine";
+      osc.frequency.setValueAtTime(pitch * .34, start);
+      sub.frequency.setValueAtTime(pitch * .17, start);
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(260 + state.lightness * 8, start);
+      osc.connect(filter);
+      sub.connect(filter);
+      filter.connect(gain);
+      connectSoundOutput(gain, audioOut, audio);
+      const end = shapeGain(gain, start, .16, .36, .72 + state.softness * .38, .026 + state.energy * .018);
+      osc.start(start);
+      sub.start(start);
+      osc.stop(end);
+      sub.stop(end);
+      longestEnd = Math.max(longestEnd, end);
+    } else if (soundMode === "crystalPluck") {
+      const osc = audio.createOscillator();
+      const gain = audio.createGain();
+      const filter = audio.createBiquadFilter();
+      osc.type = state.sharpness > state.softness ? "square" : "triangle";
+      osc.frequency.setValueAtTime(pitch * 2.1, start);
+      filter.type = "highpass";
+      filter.frequency.setValueAtTime(650 + code * 24, start);
+      osc.connect(filter);
+      filter.connect(gain);
+      connectSoundOutput(gain, audioOut, audio);
+      const end = shapeGain(gain, start, .006, .018, .18 + state.softness * .12, .032 + state.energy * .035);
+      osc.start(start);
+      osc.stop(end);
+      longestEnd = Math.max(longestEnd, end);
+    } else if (soundMode === "staticPulse") {
+      const osc = audio.createOscillator();
+      const gain = audio.createGain();
+      const filter = audio.createBiquadFilter();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(pitch * (1.5 + (i % 3) * .35), start);
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(900 + code * 45 + state.energy * 850, start);
+      filter.Q.value = 8 + state.sharpness * 7;
+      osc.connect(filter);
+      filter.connect(gain);
+      connectSoundOutput(gain, audioOut, audio);
+      const end = shapeGain(gain, start, .003, .015, .07 + state.sharpness * .04, .026 + state.energy * .03);
+      osc.start(start);
+      osc.stop(end);
+      longestEnd = Math.max(longestEnd, end);
+    } else if (soundMode === "velvetPad") {
+      const osc = audio.createOscillator();
+      const second = audio.createOscillator();
+      const gain = audio.createGain();
+      const filter = audio.createBiquadFilter();
+      osc.type = "sine";
+      second.type = "triangle";
+      osc.frequency.setValueAtTime(pitch * .74, start);
+      second.frequency.setValueAtTime(pitch * .99, start);
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(500 + state.lightness * 12, start);
+      osc.connect(filter);
+      second.connect(filter);
+      filter.connect(gain);
+      connectSoundOutput(gain, audioOut, audio);
+      const end = shapeGain(gain, start, .26 + state.softness * .12, .22, .68, .022 + state.energy * .018);
+      osc.start(start);
+      second.start(start);
+      osc.stop(end);
+      second.stop(end);
+      longestEnd = Math.max(longestEnd, end);
+    } else if (soundMode === "typewriterPercussion") {
+      const click = createNoiseSource(audio, .09);
+      const clickGain = audio.createGain();
+      const clickFilter = audio.createBiquadFilter();
+      clickFilter.type = "highpass";
+      clickFilter.frequency.setValueAtTime(1100 + code * 25, start);
+      click.connect(clickFilter);
+      clickFilter.connect(clickGain);
+      connectSoundOutput(clickGain, audioOut, audio);
+      const clickEnd = shapeGain(clickGain, start, .002, .012, .045, .03 + state.sharpness * .035);
+      click.start(start);
+      click.stop(clickEnd);
 
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(500 + state.lightness * 30 + code * 35, now + i * .045);
-
-    gain.gain.setValueAtTime(0, now + i * .045);
-    gain.gain.linearRampToValueAtTime(.038 + state.energy * .032, now + i * .045 + .012);
-    gain.gain.exponentialRampToValueAtTime(.001, now + i * .045 + .30 + state.softness * .25);
-
-    osc.connect(filter);
-    filter.connect(gain);
-
-    if (audioOut) gain.connect(audioOut);
-    else gain.connect(audio.destination);
-
-    osc.start(now + i * .045);
-    osc.stop(now + i * .045 + .55);
+      const osc = audio.createOscillator();
+      const toneGain = audio.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(pitch * 1.25, start + .008);
+      osc.connect(toneGain);
+      connectSoundOutput(toneGain, audioOut, audio);
+      const toneEnd = shapeGain(toneGain, start + .008, .004, .018, .09 + state.softness * .06, .012 + state.energy * .015);
+      osc.start(start + .008);
+      osc.stop(toneEnd);
+      longestEnd = Math.max(longestEnd, clickEnd, toneEnd);
+    } else if (soundMode === "oceanWash") {
+      const osc = audio.createOscillator();
+      const lfo = audio.createOscillator();
+      const lfoGain = audio.createGain();
+      const gain = audio.createGain();
+      const filter = audio.createBiquadFilter();
+      osc.type = "sine";
+      lfo.type = "sine";
+      osc.frequency.setValueAtTime(pitch * .55, start);
+      lfo.frequency.setValueAtTime(.7 + (h % 9) * .08, start);
+      lfoGain.gain.setValueAtTime(70 + state.softness * 55, start);
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(450 + code * 18, start);
+      lfo.connect(lfoGain);
+      lfoGain.connect(filter.frequency);
+      osc.connect(filter);
+      filter.connect(gain);
+      connectSoundOutput(gain, audioOut, audio);
+      const end = shapeGain(gain, start, .18, .26, .62 + state.softness * .32, .02 + state.energy * .018);
+      osc.start(start);
+      lfo.start(start);
+      osc.stop(end);
+      lfo.stop(end);
+      longestEnd = Math.max(longestEnd, end);
+    } else {
+      const low = audio.createOscillator();
+      const mid = audio.createOscillator();
+      const gain = audio.createGain();
+      const filter = audio.createBiquadFilter();
+      low.type = "triangle";
+      mid.type = "sine";
+      low.frequency.setValueAtTime(pitch * .42, start);
+      mid.frequency.setValueAtTime(pitch * .63 + code * 2, start);
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(360 + state.lightness * 9, start);
+      filter.Q.value = 1.4 + state.energy * 1.8;
+      low.connect(filter);
+      mid.connect(filter);
+      filter.connect(gain);
+      connectSoundOutput(gain, audioOut, audio);
+      const end = shapeGain(gain, start, .09, .32, .85 + state.softness * .25, .024 + state.energy * .024);
+      low.start(start);
+      mid.start(start);
+      low.stop(end);
+      mid.stop(end);
+      longestEnd = Math.max(longestEnd, end);
+    }
   });
 
-  if (!audioCtx) setTimeout(() => audio.close(), 1500);
+  if (!audioCtx) setTimeout(() => audio.close(), Math.max(1500, (longestEnd - now + .2) * 1000));
 }
 
 function updateFromTyping() {
@@ -1132,6 +1361,7 @@ A field of glass answered in blue fire.`;
 });
 
 storyInput.addEventListener("input", updateFromTyping);
+soundModeSelect.addEventListener("change", updateSoundReadout);
 
 storyInput.value = `The moon opened like a silver eye.
 Moss climbed the old stone door.
