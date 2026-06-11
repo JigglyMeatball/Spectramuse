@@ -1,0 +1,14 @@
+{
+  "name": "spectramuse",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-static.mjs",
+    "preview": "npm run build && npx wrangler dev",
+    "deploy:wrangler": "npm run build && npx wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.99.0"
+  }
+}

@@ -92,7 +92,63 @@
   .setup-wrap {
     position: relative;
     z-index: 8;
+  }
+
+  .top-actions {
     margin-left: auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .volume-control {
+    width: min(360px, calc(100vw - 48px));
+    min-height: 66px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.13);
+    background: rgba(255,255,255,.065);
+    box-shadow: 0 18px 45px rgba(0,0,0,.28), inset 0 0 24px rgba(255,255,255,.025);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mute-button {
+    min-width: 92px;
+    padding: 11px 10px;
+  }
+
+  .volume-meter {
+    min-width: 0;
+    flex: 1;
+    display: grid;
+    gap: 8px;
+  }
+
+  .volume-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .volume-level {
+    color: var(--accent);
+    font-size: .86rem;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+  }
+
+  .volume-slider {
+    width: 100%;
+    min-width: 0;
+    height: 28px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
   }
 
   .setup-button {
@@ -312,6 +368,14 @@
 
   button:active { transform: translateY(2px); }
 
+  button:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  .volume-slider:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
   .hint {
     color: rgba(248,239,226,.55);
     font-size: .86rem;
@@ -344,12 +408,16 @@
     .preview-readouts { grid-template-columns: 1fr; }
     .actions { grid-template-columns: 1fr 1fr; }
     .topbar { align-items: flex-start; }
+    .top-actions { flex-wrap: wrap; }
+    .volume-control { flex: 1 1 260px; }
     .story-card { min-height: 340px; }
     textarea { min-height: 360px; }
   }
 
   @media (max-width: 540px) {
     .topbar { flex-direction: column; }
+    .top-actions { width: 100%; margin-left: 0; flex-direction: column; }
+    .volume-control { width: 100%; }
     .setup-wrap { width: 100%; margin-left: 0; }
     .setup-button { width: 100%; }
     .setup-dropdown { left: 0; right: auto; width: 100%; }
@@ -369,35 +437,47 @@
         Where stories become color, sound, and motion.
       </div>
     </div>
-    <div class="setup-wrap">
-      <button id="setupButton" class="setup-button" type="button" aria-expanded="false" aria-controls="setupDropdown">Setup</button>
-      <div id="setupDropdown" class="setup-dropdown" hidden>
-        <div class="setup-field">
-          <label class="label" for="moodPresetSelect">Mood Preset</label>
-          <select id="moodPresetSelect" title="Choose mood preset">
-            <option value="storyReactive">Story Reactive</option>
-          </select>
+    <div class="top-actions">
+      <section class="volume-control" aria-labelledby="volumeLabel">
+        <button id="muteButton" class="mute-button secondary" type="button" aria-pressed="false" aria-label="Mute sound">Mute</button>
+        <div class="volume-meter">
+          <label id="volumeLabel" class="label volume-label" for="volumeSlider">
+            <span>Volume</span>
+            <span id="volumeLevel" class="volume-level">80%</span>
+          </label>
+          <input id="volumeSlider" class="volume-slider" type="range" min="0" max="200" step="1" value="80" aria-label="Audio volume from 0 to 200 percent" aria-valuemin="0" aria-valuemax="200" aria-valuenow="80" aria-valuetext="80 percent" />
         </div>
-        <div class="setup-field">
-          <label class="label" for="soundModeSelect">Sound Mode</label>
-          <select id="soundModeSelect" title="Choose generated sound style">
-            <option value="museBell">Muse Bell</option>
-            <option value="deepDrone">Deep Drone</option>
-            <option value="crystalPluck">Crystal Pluck</option>
-            <option value="staticPulse">Static Pulse</option>
-            <option value="velvetPad">Velvet Pad</option>
-            <option value="typewriterPercussion">Typewriter Percussion</option>
-            <option value="oceanWash">Ocean Wash</option>
-            <option value="auroraChoir">Aurora Choir</option>
-          </select>
-        </div>
-        <div class="setup-field">
-          <label class="label" for="formatSelect">Output Format</label>
-          <select id="formatSelect" title="Choose output shape">
-            <option value="vertical">Vertical 9:16 social video frame</option>
-            <option value="square">Square post frame</option>
-            <option value="wide">Wide YouTube frame</option>
-          </select>
+      </section>
+      <div class="setup-wrap">
+        <button id="setupButton" class="setup-button" type="button" aria-expanded="false" aria-controls="setupDropdown">Setup</button>
+        <div id="setupDropdown" class="setup-dropdown" hidden>
+          <div class="setup-field">
+            <label class="label" for="moodPresetSelect">Mood Preset</label>
+            <select id="moodPresetSelect" title="Choose mood preset">
+              <option value="storyReactive">Story Reactive</option>
+            </select>
+          </div>
+          <div class="setup-field">
+            <label class="label" for="soundModeSelect">Sound Mode</label>
+            <select id="soundModeSelect" title="Choose generated sound style">
+              <option value="museBell">Muse Bell</option>
+              <option value="deepDrone">Deep Drone</option>
+              <option value="crystalPluck">Crystal Pluck</option>
+              <option value="staticPulse">Static Pulse</option>
+              <option value="velvetPad">Velvet Pad</option>
+              <option value="typewriterPercussion">Typewriter Percussion</option>
+              <option value="oceanWash">Ocean Wash</option>
+              <option value="auroraChoir">Aurora Choir</option>
+            </select>
+          </div>
+          <div class="setup-field">
+            <label class="label" for="formatSelect">Output Format</label>
+            <select id="formatSelect" title="Choose output shape">
+              <option value="vertical">Vertical 9:16 social video frame</option>
+              <option value="square">Square post frame</option>
+              <option value="wide">Wide YouTube frame</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
@@ -488,6 +568,9 @@ const soundModeSelect = document.getElementById("soundModeSelect");
 const setupButton = document.getElementById("setupButton");
 const setupDropdown = document.getElementById("setupDropdown");
 const moodPresetSelect = document.getElementById("moodPresetSelect");
+const muteButton = document.getElementById("muteButton");
+const volumeSlider = document.getElementById("volumeSlider");
+const volumeLevel = document.getElementById("volumeLevel");
 
 const SOUND_MODES = {
   museBell: { label: "Muse Bell", descriptor: "soft bell" },
@@ -499,6 +582,97 @@ const SOUND_MODES = {
   oceanWash: { label: "Ocean Wash", descriptor: "filtered ocean wash" },
   auroraChoir: { label: "Aurora Choir", descriptor: "soft glowing choir" }
 };
+const AUDIO_SETTINGS_KEY = "spectramuseAudioSettings.v1";
+const MIN_VOLUME = 0;
+const MAX_VOLUME = 2;
+const DEFAULT_VOLUME = 0.8;
+let audioSettings = {
+  volume: DEFAULT_VOLUME,
+  muted: false
+};
+const activeVolumeGains = new Set();
+
+function clampNumber(value, min, max, fallback) {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.min(max, Math.max(min, value));
+}
+
+function loadAudioSettings() {
+  try {
+    const raw = window.localStorage && window.localStorage.getItem(AUDIO_SETTINGS_KEY);
+    if (!raw) return { volume: DEFAULT_VOLUME, muted: false };
+
+    const parsed = JSON.parse(raw);
+    return {
+      volume: clampNumber(Number(parsed.volume), MIN_VOLUME, MAX_VOLUME, DEFAULT_VOLUME),
+      muted: Boolean(parsed.muted)
+    };
+  } catch {
+    return { volume: DEFAULT_VOLUME, muted: false };
+  }
+}
+
+function saveAudioSettings() {
+  try {
+    window.localStorage.setItem(AUDIO_SETTINGS_KEY, JSON.stringify(audioSettings));
+  } catch {}
+}
+
+function getVolumePercent() {
+  return Math.round(audioSettings.volume * 100);
+}
+
+function getEffectiveVolume() {
+  return audioSettings.muted ? 0 : audioSettings.volume;
+}
+
+function applyVolumeToGain(masterGain, audioCtx) {
+  const target = getEffectiveVolume();
+  const now = audioCtx && Number.isFinite(audioCtx.currentTime) ? audioCtx.currentTime : 0;
+  try {
+    masterGain.gain.cancelScheduledValues(now);
+    masterGain.gain.setTargetAtTime(target, now, 0.015);
+  } catch {
+    masterGain.gain.value = target;
+  }
+}
+
+function applyVolumeToActiveGains() {
+  activeVolumeGains.forEach(entry => applyVolumeToGain(entry.masterGain, entry.audioCtx));
+}
+
+function registerVolumeGain(masterGain, audioCtx) {
+  const entry = { masterGain, audioCtx };
+  masterGain.gain.value = getEffectiveVolume();
+  activeVolumeGains.add(entry);
+  applyVolumeToGain(masterGain, audioCtx);
+  return () => activeVolumeGains.delete(entry);
+}
+
+function syncVolumeControls() {
+  const percent = getVolumePercent();
+  const percentLabel = `${percent}%`;
+
+  if (volumeSlider) {
+    volumeSlider.value = String(percent);
+    volumeSlider.setAttribute("aria-valuenow", String(percent));
+    volumeSlider.setAttribute("aria-valuetext", `${audioSettings.muted ? "Muted, " : ""}${percent} percent`);
+  }
+  if (volumeLevel) volumeLevel.textContent = percentLabel;
+  if (muteButton) {
+    muteButton.textContent = audioSettings.muted ? "Unmute" : "Mute";
+    muteButton.setAttribute("aria-pressed", String(audioSettings.muted));
+    muteButton.setAttribute("aria-label", audioSettings.muted ? "Unmute sound" : "Mute sound");
+  }
+}
+
+function updateAudioSettings({ persist = true } = {}) {
+  syncVolumeControls();
+  applyVolumeToActiveGains();
+  if (persist) saveAudioSettings();
+}
+
+audioSettings = loadAudioSettings();
 
 function getAudioContextConstructor() {
   return window.AudioContext || window.webkitAudioContext || null;
@@ -941,15 +1115,46 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function buildAudioChain(audioCtx) {
+function buildAudioChain(audioCtx, options = {}) {
+  const { capture = false } = options;
   const masterGain = audioCtx.createGain();
-  masterGain.gain.value = 0.9;
-  masterGain.connect(audioCtx.destination);
+  const releaseVolumeGain = registerVolumeGain(masterGain, audioCtx);
+  let outputNode = masterGain;
+  let limiter = null;
 
-  const mediaDestination = audioCtx.createMediaStreamDestination();
-  masterGain.connect(mediaDestination);
+  if (typeof audioCtx.createDynamicsCompressor === "function") {
+    limiter = audioCtx.createDynamicsCompressor();
+    limiter.threshold.value = -8;
+    limiter.knee.value = 12;
+    limiter.ratio.value = 8;
+    limiter.attack.value = 0.003;
+    limiter.release.value = 0.18;
+    masterGain.connect(limiter);
+    outputNode = limiter;
+  }
 
-  return { masterGain, mediaDestination };
+  outputNode.connect(audioCtx.destination);
+
+  let mediaDestination = null;
+  if (capture) {
+    if (typeof audioCtx.createMediaStreamDestination !== "function") {
+      throw new Error(unsupportedMessages.recording);
+    }
+    mediaDestination = audioCtx.createMediaStreamDestination();
+    outputNode.connect(mediaDestination);
+  }
+
+  return {
+    masterGain,
+    mediaDestination,
+    cleanup() {
+      releaseVolumeGain();
+      try { masterGain.disconnect(); } catch {}
+      if (limiter) {
+        try { limiter.disconnect(); } catch {}
+      }
+    }
+  };
 }
 
 function connectSoundOutput(node, audioOut, audio) {
@@ -982,7 +1187,10 @@ function createNoiseSource(audio, duration) {
 function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
   const AudioContext = getAudioContextConstructor();
   if (!AudioContext) return;
+  const ownsAudio = !audioCtx;
   const audio = audioCtx || new AudioContext();
+  const transientChain = ownsAudio && !audioOut ? buildAudioChain(audio) : null;
+  const outputNode = audioOut || (transientChain ? transientChain.masterGain : audio.destination);
   const clean = cleanWord(word) || "story";
   const h = hashWord(clean);
   const root = 140 + (h % 520);
@@ -1012,7 +1220,7 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
       osc.connect(filter);
       overtone.connect(filter);
       filter.connect(gain);
-      connectSoundOutput(gain, audioOut, audio);
+      connectSoundOutput(gain, outputNode, audio);
       const end = shapeGain(gain, start, .018, .02, .62 + state.softness * .25, .025 + state.energy * .025);
       osc.start(start);
       overtone.start(start);
@@ -1033,7 +1241,7 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
       osc.connect(filter);
       sub.connect(filter);
       filter.connect(gain);
-      connectSoundOutput(gain, audioOut, audio);
+      connectSoundOutput(gain, outputNode, audio);
       const end = shapeGain(gain, start, .16, .36, .72 + state.softness * .38, .026 + state.energy * .018);
       osc.start(start);
       sub.start(start);
@@ -1050,7 +1258,7 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
       filter.frequency.setValueAtTime(650 + code * 24, start);
       osc.connect(filter);
       filter.connect(gain);
-      connectSoundOutput(gain, audioOut, audio);
+      connectSoundOutput(gain, outputNode, audio);
       const end = shapeGain(gain, start, .006, .018, .18 + state.softness * .12, .032 + state.energy * .035);
       osc.start(start);
       osc.stop(end);
@@ -1066,7 +1274,7 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
       filter.Q.value = 8 + state.sharpness * 7;
       osc.connect(filter);
       filter.connect(gain);
-      connectSoundOutput(gain, audioOut, audio);
+      connectSoundOutput(gain, outputNode, audio);
       const end = shapeGain(gain, start, .003, .015, .07 + state.sharpness * .04, .026 + state.energy * .03);
       osc.start(start);
       osc.stop(end);
@@ -1085,7 +1293,7 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
       osc.connect(filter);
       second.connect(filter);
       filter.connect(gain);
-      connectSoundOutput(gain, audioOut, audio);
+      connectSoundOutput(gain, outputNode, audio);
       const end = shapeGain(gain, start, .26 + state.softness * .12, .22, .68, .022 + state.energy * .018);
       osc.start(start);
       second.start(start);
@@ -1100,7 +1308,7 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
       clickFilter.frequency.setValueAtTime(1100 + code * 25, start);
       click.connect(clickFilter);
       clickFilter.connect(clickGain);
-      connectSoundOutput(clickGain, audioOut, audio);
+      connectSoundOutput(clickGain, outputNode, audio);
       const clickEnd = shapeGain(clickGain, start, .002, .012, .045, .03 + state.sharpness * .035);
       click.start(start);
       click.stop(clickEnd);
@@ -1110,7 +1318,7 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
       osc.type = "triangle";
       osc.frequency.setValueAtTime(pitch * 1.25, start + .008);
       osc.connect(toneGain);
-      connectSoundOutput(toneGain, audioOut, audio);
+      connectSoundOutput(toneGain, outputNode, audio);
       const toneEnd = shapeGain(toneGain, start + .008, .004, .018, .09 + state.softness * .06, .012 + state.energy * .015);
       osc.start(start + .008);
       osc.stop(toneEnd);
@@ -1132,7 +1340,7 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
       lfoGain.connect(filter.frequency);
       osc.connect(filter);
       filter.connect(gain);
-      connectSoundOutput(gain, audioOut, audio);
+      connectSoundOutput(gain, outputNode, audio);
       const end = shapeGain(gain, start, .18, .26, .62 + state.softness * .32, .02 + state.energy * .018);
       osc.start(start);
       lfo.start(start);
@@ -1163,7 +1371,7 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
       octave.connect(filter);
       third.connect(filter);
       filter.connect(gain);
-      connectSoundOutput(gain, audioOut, audio);
+      connectSoundOutput(gain, outputNode, audio);
       const end = shapeGain(gain, start, .18 + state.softness * .08, .28, .72 + state.softness * .28, .016 + state.energy * .012);
       rootTone.start(start);
       fifth.start(start);
@@ -1177,7 +1385,12 @@ function playWordSound(word, offset=0, audioCtx=null, audioOut=null) {
     }
   });
 
-  if (!audioCtx) setTimeout(() => audio.close(), Math.max(1500, (longestEnd - now + .2) * 1000));
+  if (ownsAudio) {
+    setTimeout(() => {
+      if (transientChain) transientChain.cleanup();
+      audio.close();
+    }, Math.max(1500, (longestEnd - now + .2) * 1000));
+  }
 }
 
 function updateFromTyping() {
@@ -1210,7 +1423,8 @@ async function startRecorder(format, audio) {
   const rctx = recordCanvas.getContext("2d");
   if (!rctx) throw new Error(unsupportedMessages.canvasExport);
 
-  const chain = buildAudioChain(audio);
+  const chain = buildAudioChain(audio, { capture: true });
+  if (!chain.mediaDestination) throw new Error(unsupportedMessages.recording);
 
   const stream = recordCanvas.captureStream(30);
   chain.mediaDestination.stream.getAudioTracks().forEach(track => stream.addTrack(track));
@@ -1251,6 +1465,7 @@ async function startRecorder(format, audio) {
   activeRecorder = {
     recorder,
     audioOut: chain.masterGain,
+    chain,
     canvas: recordCanvas,
     ctx: rctx,
     format,
@@ -1269,9 +1484,13 @@ async function stopRecorder() {
   try {
     if (local.recorder.state !== "inactive") local.recorder.stop();
   } catch {}
-  const blob = await local.stopped;
-  statusEl.textContent = "Recording saved as .webm";
-  return blob;
+  try {
+    const blob = await local.stopped;
+    statusEl.textContent = "Recording saved as .webm";
+    return blob;
+  } finally {
+    if (local.chain) local.chain.cleanup();
+  }
 }
 
 async function performStory(options = {}) {
@@ -1295,13 +1514,17 @@ async function performStory(options = {}) {
 
   const scenes = currentOnly ? [getScenes(text).slice(-1)[0]] : getScenes(text);
   let audio = null;
+  let outputChain = null;
 
   try {
     audio = await createStartedAudioContext();
-    let outputNode = audio.destination;
+    let outputNode = null;
     if (record) {
       const rec = await startRecorder(formatSelect.value, audio);
       outputNode = rec.audioOut;
+    } else {
+      outputChain = buildAudioChain(audio);
+      outputNode = outputChain.masterGain;
     }
 
     for (let s = 0; s < scenes.length; s++) {
@@ -1334,6 +1557,7 @@ async function performStory(options = {}) {
     if (record) {
       try { await stopRecorder(); } catch {}
     }
+    if (outputChain) outputChain.cleanup();
     try { if (audio) await audio.close(); } catch {}
     isPerforming = false;
     refreshActionAvailability();
@@ -1426,6 +1650,17 @@ sceneButton.addEventListener("click", () => performStory({ currentOnly: true, re
 recordButton.addEventListener("click", () => performStory({ currentOnly: false, record: true }));
 performAndSaveSceneButton.addEventListener("click", () => performStory({ currentOnly: true, record: true }));
 stopRecordButton.addEventListener("click", stopPerformance);
+muteButton.addEventListener("click", () => {
+  audioSettings.muted = !audioSettings.muted;
+  updateAudioSettings();
+  statusEl.textContent = audioSettings.muted ? "Sound muted." : `Sound restored at ${getVolumePercent()}%.`;
+});
+volumeSlider.addEventListener("input", () => {
+  audioSettings.volume = clampNumber(Number(volumeSlider.value) / 100, MIN_VOLUME, MAX_VOLUME, DEFAULT_VOLUME);
+  if (audioSettings.muted && audioSettings.volume > 0) audioSettings.muted = false;
+  updateAudioSettings();
+  statusEl.textContent = `Volume set to ${getVolumePercent()}%.`;
+});
 setupButton.addEventListener("click", event => {
   event.stopPropagation();
   toggleSetupDropdown();
@@ -1466,6 +1701,7 @@ storyInput.value = `The moon opened like a silver eye.
 Moss climbed the old stone door.
 Thunder wrote its name across the sky.
 A field of glass answered in blue fire.`;
+updateAudioSettings({ persist: false });
 updateFromTyping();
 refreshActionAvailability();
 showInitialCompatibilityStatus();
