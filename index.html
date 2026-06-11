@@ -68,6 +68,7 @@
 
   .topbar {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: 18px;
     align-items: flex-start;
@@ -97,6 +98,7 @@
   .top-actions {
     margin-left: auto;
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     justify-content: flex-end;
     gap: 12px;
@@ -113,6 +115,24 @@
     display: flex;
     align-items: center;
     gap: 12px;
+  }
+
+  .display-control {
+    width: min(250px, calc(100vw - 48px));
+    min-height: 66px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.13);
+    background: rgba(255,255,255,.065);
+    box-shadow: 0 18px 45px rgba(0,0,0,.28), inset 0 0 24px rgba(255,255,255,.025);
+    display: grid;
+    gap: 8px;
+  }
+
+  .display-control select {
+    width: 100%;
+    min-height: 38px;
+    padding: 9px 11px;
   }
 
   .mute-button {
@@ -259,7 +279,8 @@
 
   .viewer {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto;
+    align-content: start;
     gap: 12px;
     padding: 16px;
     min-height: 0;
@@ -268,13 +289,15 @@
 
   .story-card {
     position: relative;
-    min-height: 0;
+    height: clamp(220px, 32vh, 380px);
+    min-height: 220px;
     display: grid;
     place-items: center;
-    padding: 28px;
+    padding: 22px;
     overflow: hidden;
-    border-radius: 16px;
-    background: rgba(0,0,0,.16);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.11);
+    background: rgba(0,0,0,.22);
   }
 
   .story-card::before {
@@ -298,12 +321,110 @@
     width: 100%;
     max-height: 100%;
     overflow: auto;
-    font-size: clamp(1.35rem, 3.1vw, 2.85rem);
-    line-height: 1.25;
+    font-size: clamp(1.18rem, 2.45vw, 2.25rem);
+    line-height: 1.23;
     font-weight: 800;
     text-align: center;
     text-shadow: 0 4px 28px rgba(0,0,0,.72);
     white-space: pre-wrap;
+  }
+
+  .display-token {
+    display: inline;
+    border-radius: 4px;
+  }
+
+  html[data-display-mode="spectraColor"] .display-token {
+    font-weight: 850;
+  }
+
+  html[data-display-mode="spectraColor"] .display-token-0 {
+    color: #ffd27a;
+    text-shadow: 0 0 16px rgba(255,210,122,.30);
+  }
+
+  html[data-display-mode="spectraColor"] .display-token-1 {
+    color: #7bd3ff;
+    text-shadow: 0 0 16px rgba(123,211,255,.26);
+  }
+
+  html[data-display-mode="spectraColor"] .display-token-2 {
+    color: #f79ac8;
+    text-shadow: 0 0 14px rgba(247,154,200,.24);
+  }
+
+  html[data-display-mode="spectraColor"] .display-token-3 {
+    color: #bda2ff;
+    text-shadow: 0 0 14px rgba(189,162,255,.24);
+  }
+
+  html[data-display-mode="spectraColor"] .display-token-4 {
+    color: #8ee9d6;
+    text-shadow: 0 0 14px rgba(142,233,214,.22);
+  }
+
+  html[data-display-mode="spectraColor"] .display-token-5 {
+    color: #f8efe2;
+    text-shadow: 0 0 12px rgba(248,239,226,.18);
+  }
+
+  html[data-display-mode="colorblindFriendly"] .display-token {
+    font-weight: 850;
+    text-decoration-line: underline;
+    text-underline-offset: .15em;
+    text-decoration-thickness: .08em;
+    text-shadow: 0 3px 16px rgba(0,0,0,.82);
+  }
+
+  html[data-display-mode="colorblindFriendly"] .display-token-0 {
+    color: #56b4e9;
+    text-decoration-style: solid;
+  }
+
+  html[data-display-mode="colorblindFriendly"] .display-token-1 {
+    color: #e6ab02;
+    text-decoration-style: double;
+  }
+
+  html[data-display-mode="colorblindFriendly"] .display-token-2 {
+    color: #cc79a7;
+    text-decoration-style: dotted;
+  }
+
+  html[data-display-mode="colorblindFriendly"] .display-token-3 {
+    color: #00b8a9;
+    text-decoration-style: dashed;
+  }
+
+  html[data-display-mode="colorblindFriendly"] .display-token-4 {
+    color: #f0e442;
+    text-decoration-style: solid;
+  }
+
+  html[data-display-mode="colorblindFriendly"] .display-token-5 {
+    color: #f8efe2;
+    text-decoration-style: dotted;
+  }
+
+  html[data-display-mode="highContrast"] .story-card {
+    background: rgba(0,0,0,.76);
+    border-color: rgba(255,255,255,.62);
+    box-shadow: none;
+  }
+
+  html[data-display-mode="highContrast"] .story-card::before {
+    opacity: .05;
+    animation: none;
+  }
+
+  html[data-display-mode="highContrast"] .line-display {
+    color: #ffffff;
+    padding: 8px;
+    text-shadow: none;
+  }
+
+  html[data-display-mode="plain"] .line-display {
+    color: var(--ink);
   }
 
   .preview-readouts {
@@ -409,19 +530,29 @@
     .actions { grid-template-columns: 1fr 1fr; }
     .topbar { align-items: flex-start; }
     .top-actions { flex-wrap: wrap; }
+    .display-control { flex: 1 1 220px; }
     .volume-control { flex: 1 1 260px; }
-    .story-card { min-height: 340px; }
+    .story-card {
+      height: clamp(230px, 38vw, 320px);
+      min-height: 230px;
+    }
+    .line-display { font-size: clamp(1.15rem, 5.2vw, 2rem); }
     textarea { min-height: 360px; }
   }
 
   @media (max-width: 540px) {
     .topbar { flex-direction: column; }
     .top-actions { width: 100%; margin-left: 0; flex-direction: column; }
+    .display-control { width: 100%; }
     .volume-control { width: 100%; }
     .setup-wrap { width: 100%; margin-left: 0; }
     .setup-button { width: 100%; }
     .setup-dropdown { left: 0; right: auto; width: 100%; }
     .actions { grid-template-columns: 1fr; }
+    .story-card {
+      height: clamp(230px, 58vw, 300px);
+      padding: 18px;
+    }
   }
 </style>
 </head>
@@ -438,6 +569,15 @@
       </div>
     </div>
     <div class="top-actions">
+      <section class="display-control" aria-labelledby="displayModeLabel">
+        <label id="displayModeLabel" class="label" for="displayModeSelect">Text Mode</label>
+        <select id="displayModeSelect" aria-label="Text color display mode">
+          <option value="plain">Plain</option>
+          <option value="spectraColor">Spectra Color</option>
+          <option value="colorblindFriendly">Colorblind Friendly</option>
+          <option value="highContrast">High Contrast</option>
+        </select>
+      </section>
       <section class="volume-control" aria-labelledby="volumeLabel">
         <button id="muteButton" class="mute-button secondary" type="button" aria-pressed="false" aria-label="Mute sound">Mute</button>
         <div class="volume-meter">
@@ -568,6 +708,7 @@ const soundModeSelect = document.getElementById("soundModeSelect");
 const setupButton = document.getElementById("setupButton");
 const setupDropdown = document.getElementById("setupDropdown");
 const moodPresetSelect = document.getElementById("moodPresetSelect");
+const displayModeSelect = document.getElementById("displayModeSelect");
 const muteButton = document.getElementById("muteButton");
 const volumeSlider = document.getElementById("volumeSlider");
 const volumeLevel = document.getElementById("volumeLevel");
@@ -582,10 +723,20 @@ const SOUND_MODES = {
   oceanWash: { label: "Ocean Wash", descriptor: "filtered ocean wash" },
   auroraChoir: { label: "Aurora Choir", descriptor: "soft glowing choir" }
 };
+const DISPLAY_MODES = {
+  plain: "Plain",
+  spectraColor: "Spectra Color",
+  colorblindFriendly: "Colorblind Friendly",
+  highContrast: "High Contrast"
+};
+const DISPLAY_MODE_KEY = "spectramuseDisplayMode.v1";
+const DEFAULT_DISPLAY_MODE = "plain";
+const DISPLAY_TOKEN_COUNT = 6;
 const AUDIO_SETTINGS_KEY = "spectramuseAudioSettings.v1";
 const MIN_VOLUME = 0;
 const MAX_VOLUME = 2;
 const DEFAULT_VOLUME = 0.8;
+let displayMode = DEFAULT_DISPLAY_MODE;
 let audioSettings = {
   volume: DEFAULT_VOLUME,
   muted: false
@@ -673,6 +824,77 @@ function updateAudioSettings({ persist = true } = {}) {
 }
 
 audioSettings = loadAudioSettings();
+
+function normalizeDisplayMode(mode) {
+  return DISPLAY_MODES[mode] ? mode : DEFAULT_DISPLAY_MODE;
+}
+
+function loadDisplayMode() {
+  try {
+    const saved = window.localStorage && window.localStorage.getItem(DISPLAY_MODE_KEY);
+    return normalizeDisplayMode(saved);
+  } catch {
+    return DEFAULT_DISPLAY_MODE;
+  }
+}
+
+function saveDisplayMode() {
+  try {
+    window.localStorage.setItem(DISPLAY_MODE_KEY, displayMode);
+  } catch {}
+}
+
+function getDisplayMode() {
+  return normalizeDisplayMode(displayMode);
+}
+
+function shouldDecorateDisplayText() {
+  const mode = getDisplayMode();
+  return mode === "spectraColor" || mode === "colorblindFriendly";
+}
+
+function renderLineDisplayText(text) {
+  if (!lineDisplay) return;
+  const output = text || "";
+  lineDisplay.textContent = "";
+
+  if (!shouldDecorateDisplayText()) {
+    lineDisplay.textContent = output;
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  let tokenIndex = 0;
+  output.split(/(\s+)/).forEach(part => {
+    if (!part) return;
+    if (/^\s+$/.test(part)) {
+      fragment.appendChild(document.createTextNode(part));
+      return;
+    }
+
+    const span = document.createElement("span");
+    span.className = `display-token display-token-${tokenIndex % DISPLAY_TOKEN_COUNT}`;
+    span.textContent = part;
+    fragment.appendChild(span);
+    tokenIndex++;
+  });
+  lineDisplay.appendChild(fragment);
+}
+
+function syncDisplayModeControls() {
+  displayMode = getDisplayMode();
+  document.documentElement.dataset.displayMode = displayMode;
+  if (displayModeSelect) displayModeSelect.value = displayMode;
+  renderLineDisplayText(currentDisplayText);
+}
+
+function updateDisplayMode(mode, { persist = true } = {}) {
+  displayMode = normalizeDisplayMode(mode);
+  syncDisplayModeControls();
+  if (persist) saveDisplayMode();
+}
+
+displayMode = loadDisplayMode();
 
 function getAudioContextConstructor() {
   return window.AudioContext || window.webkitAudioContext || null;
@@ -1020,37 +1242,98 @@ function wrapLines(c, text, maxWidth) {
   return lines;
 }
 
+const CANVAS_DISPLAY_COLORS = {
+  spectraColor: ["#ffd27a", "#7bd3ff", "#f79ac8", "#bda2ff", "#8ee9d6", "#f8efe2"],
+  colorblindFriendly: ["#56b4e9", "#e6ab02", "#cc79a7", "#00b8a9", "#f0e442", "#f8efe2"]
+};
+
+function getCanvasDisplayColor(mode, index) {
+  const palette = CANVAS_DISPLAY_COLORS[mode];
+  if (!palette) return mode === "highContrast" ? "#ffffff" : "#f8efe2";
+  return palette[index % palette.length];
+}
+
+function drawDisplayLine(targetCtx, line, centerX, y, mode, textSize) {
+  if (mode !== "spectraColor" && mode !== "colorblindFriendly") {
+    targetCtx.fillStyle = mode === "highContrast" ? "#ffffff" : "#f8efe2";
+    targetCtx.fillText(line, centerX, y);
+    return;
+  }
+
+  const parts = line.split(/(\s+)/).filter(part => part.length);
+  const totalWidth = parts.reduce((sum, part) => sum + targetCtx.measureText(part).width, 0);
+  let x = centerX - totalWidth / 2;
+  let tokenIndex = 0;
+  const originalAlign = targetCtx.textAlign;
+  targetCtx.textAlign = "left";
+
+  parts.forEach(part => {
+    const width = targetCtx.measureText(part).width;
+    if (/^\s+$/.test(part)) {
+      x += width;
+      return;
+    }
+
+    const color = getCanvasDisplayColor(mode, tokenIndex);
+    targetCtx.fillStyle = color;
+    targetCtx.fillText(part, x, y);
+
+    if (mode === "colorblindFriendly") {
+      const underlineY = y + textSize * 0.58;
+      const dashPatterns = [[], [6, 5], [2, 4], [10, 4]];
+      targetCtx.save();
+      targetCtx.strokeStyle = color;
+      targetCtx.lineWidth = Math.max(2, textSize * 0.055);
+      targetCtx.setLineDash(dashPatterns[tokenIndex % dashPatterns.length]);
+      targetCtx.beginPath();
+      targetCtx.moveTo(x, underlineY);
+      targetCtx.lineTo(x + width, underlineY);
+      targetCtx.stroke();
+      targetCtx.restore();
+    }
+
+    x += width;
+    tokenIndex++;
+  });
+
+  targetCtx.textAlign = originalAlign;
+}
+
 function renderStoryFrame(targetCtx, width, height, text, localT, format="wide") {
+  const mode = getDisplayMode();
+  const highContrast = mode === "highContrast";
   drawField(targetCtx, width, height, localT, width / 1080);
-  targetCtx.fillStyle = "rgba(8, 7, 12, .30)";
+  targetCtx.fillStyle = highContrast ? "rgba(0, 0, 0, .64)" : "rgba(8, 7, 12, .30)";
   targetCtx.fillRect(0, 0, width, height);
 
-  const cardMargin = Math.round(width * 0.08);
+  const cardMargin = Math.round(width * 0.10);
   const cardW = width - cardMargin * 2;
-  const cardH = height - Math.round(height * 0.18);
+  const cardH = height - Math.round(height * 0.28);
   const cardX = cardMargin;
-  const cardY = Math.round(height * 0.09);
+  const cardY = Math.round(height * 0.14);
   const radius = Math.max(24, Math.round(width * 0.024));
 
-  targetCtx.fillStyle = "rgba(8, 7, 12, .30)";
-  targetCtx.strokeStyle = "rgba(248, 239, 226, .18)";
+  targetCtx.fillStyle = highContrast ? "rgba(0, 0, 0, .82)" : "rgba(8, 7, 12, .36)";
+  targetCtx.strokeStyle = highContrast ? "rgba(255, 255, 255, .76)" : "rgba(248, 239, 226, .18)";
   targetCtx.lineWidth = Math.max(2, width * 0.0022);
   roundRect(targetCtx, cardX, cardY, cardW, cardH, radius, true, true);
 
-  const overlayGrad = targetCtx.createRadialGradient(
-    width * .3, height * .25, width * .04,
-    width * .65, height * .68, width * .85
-  );
-  overlayGrad.addColorStop(0, `hsla(${state.hue2}, 96%, 72%, .16)`);
-  overlayGrad.addColorStop(1, `hsla(${state.hue}, 70%, 20%, 0)`);
-  targetCtx.fillStyle = overlayGrad;
-  roundRect(targetCtx, cardX, cardY, cardW, cardH, radius, true, false);
+  if (!highContrast) {
+    const overlayGrad = targetCtx.createRadialGradient(
+      width * .3, height * .25, width * .04,
+      width * .65, height * .68, width * .85
+    );
+    overlayGrad.addColorStop(0, `hsla(${state.hue2}, 96%, 72%, .14)`);
+    overlayGrad.addColorStop(1, `hsla(${state.hue}, 70%, 20%, 0)`);
+    targetCtx.fillStyle = overlayGrad;
+    roundRect(targetCtx, cardX, cardY, cardW, cardH, radius, true, false);
+  }
 
-  const titleSize = Math.round(width * (format === "vertical" ? 0.03 : 0.022));
-  const textSize = Math.round(width * (format === "vertical" ? 0.055 : format === "square" ? 0.05 : 0.04));
+  const titleSize = Math.round(width * (format === "vertical" ? 0.028 : 0.02));
+  const textSize = Math.round(width * (format === "vertical" ? 0.048 : format === "square" ? 0.044 : 0.036));
   const metaSize = Math.round(width * (format === "vertical" ? 0.023 : 0.018));
 
-  targetCtx.fillStyle = "rgba(248,239,226,.92)";
+  targetCtx.fillStyle = highContrast ? "#ffffff" : "rgba(248,239,226,.92)";
   targetCtx.textAlign = "center";
   targetCtx.textBaseline = "middle";
   targetCtx.font = `700 ${titleSize}px Courier New, monospace`;
@@ -1063,11 +1346,10 @@ function renderStoryFrame(targetCtx, width, height, text, localT, format="wide")
   const textBlockHeight = Math.max(lineHeight, lines.length * lineHeight);
   let startY = cardY + cardH / 2 - textBlockHeight / 2 + lineHeight * .12;
 
-  targetCtx.shadowColor = "rgba(0,0,0,.60)";
-  targetCtx.shadowBlur = width * 0.02;
-  targetCtx.fillStyle = "#f8efe2";
+  targetCtx.shadowColor = highContrast ? "transparent" : "rgba(0,0,0,.60)";
+  targetCtx.shadowBlur = highContrast ? 0 : width * 0.02;
   lines.forEach((ln, i) => {
-    targetCtx.fillText(ln, width / 2, startY + i * lineHeight);
+    drawDisplayLine(targetCtx, ln, width / 2, startY + i * lineHeight, mode, textSize);
   });
   targetCtx.shadowBlur = 0;
 
@@ -1400,7 +1682,7 @@ function updateFromTyping() {
   analyze(last);
   const scenes = getScenes(text);
   currentDisplayText = scenes[scenes.length - 1] || "Your living story will appear here.";
-  lineDisplay.textContent = currentDisplayText;
+  renderLineDisplayText(currentDisplayText);
   statusEl.textContent = `${words.length} words / ${scenes.length} scenes`;
 }
 
@@ -1532,7 +1814,7 @@ async function performStory(options = {}) {
       const scene = scenes[s];
       const words = getWords(scene);
       currentDisplayText = scene;
-      lineDisplay.textContent = scene;
+      renderLineDisplayText(scene);
 
       for (let i = 0; i < words.length; i++) {
         if (token !== performanceToken) break;
@@ -1680,8 +1962,8 @@ document.addEventListener("keydown", event => {
 clearButton.addEventListener("click", () => {
   storyInput.value = "";
   updateFromTyping();
-  lineDisplay.textContent = "Your living story will appear here.";
-  currentDisplayText = lineDisplay.textContent;
+  currentDisplayText = "Your living story will appear here.";
+  renderLineDisplayText(currentDisplayText);
   statusEl.textContent = "Cleared.";
 });
 
@@ -1695,6 +1977,10 @@ A field of glass answered in blue fire.`;
 });
 
 storyInput.addEventListener("input", updateFromTyping);
+displayModeSelect.addEventListener("change", () => {
+  updateDisplayMode(displayModeSelect.value);
+  statusEl.textContent = `Text mode set to ${DISPLAY_MODES[getDisplayMode()]}.`;
+});
 soundModeSelect.addEventListener("change", updateSoundReadout);
 
 storyInput.value = `The moon opened like a silver eye.
@@ -1702,6 +1988,7 @@ Moss climbed the old stone door.
 Thunder wrote its name across the sky.
 A field of glass answered in blue fire.`;
 updateAudioSettings({ persist: false });
+updateDisplayMode(displayMode, { persist: false });
 updateFromTyping();
 refreshActionAvailability();
 showInitialCompatibilityStatus();
