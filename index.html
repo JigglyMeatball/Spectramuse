@@ -118,7 +118,7 @@
   }
 
   .display-control {
-    width: min(250px, calc(100vw - 48px));
+    width: min(300px, calc(100vw - 48px));
     min-height: 66px;
     padding: 10px 12px;
     border-radius: 16px;
@@ -407,21 +407,121 @@
     text-decoration-style: dotted;
   }
 
-  html[data-display-mode="highContrast"] .story-card {
-    background: rgba(0,0,0,.76);
-    border-color: rgba(255,255,255,.62);
-    box-shadow: none;
+  html[data-display-mode^="highContrast"] .display-control,
+  html[data-display-mode^="highContrast"] .typebar {
+    border-width: 2px;
   }
 
-  html[data-display-mode="highContrast"] .story-card::before {
-    opacity: .05;
+  html[data-display-mode^="highContrast"] .story-card::before {
     animation: none;
   }
 
-  html[data-display-mode="highContrast"] .line-display {
-    color: #ffffff;
+  html[data-display-mode^="highContrast"] .line-display {
     padding: 8px;
     text-shadow: none;
+  }
+
+  html[data-display-mode^="highContrast"] .current-word {
+    display: inline-block;
+    max-width: 100%;
+    padding: 3px 8px;
+    border: 2px solid currentColor;
+    border-radius: 6px;
+    text-decoration-line: underline;
+    text-decoration-thickness: .09em;
+    text-underline-offset: .16em;
+    text-shadow: none;
+  }
+
+  html[data-display-mode="highContrastPure"] .display-control,
+  html[data-display-mode="highContrastPure"] .typebar {
+    background: #000000;
+    border-color: #ffffff;
+  }
+
+  html[data-display-mode="highContrastPure"] .story-card {
+    background: #000000;
+    border: 2px solid #ffffff;
+    box-shadow: none;
+  }
+
+  html[data-display-mode="highContrastPure"] .story-card::before {
+    opacity: 0;
+  }
+
+  html[data-display-mode="highContrastPure"] .line-display {
+    color: #ffffff;
+    outline: 2px solid rgba(255,255,255,.42);
+    outline-offset: 6px;
+  }
+
+  html[data-display-mode="highContrastPure"] .current-word {
+    color: #ffffff;
+    background: #000000;
+  }
+
+  html[data-display-mode="highContrastSpectra"] .display-control,
+  html[data-display-mode="highContrastSpectra"] .typebar {
+    background: #050814;
+    border-color: #00e5ff;
+    box-shadow: 0 0 0 1px rgba(181,108,255,.45), 0 0 24px rgba(0,229,255,.16);
+  }
+
+  html[data-display-mode="highContrastSpectra"] .story-card {
+    background: #050814;
+    border: 2px solid #00e5ff;
+    box-shadow: 0 0 0 1px rgba(181,108,255,.58), 0 0 34px rgba(0,229,255,.20);
+  }
+
+  html[data-display-mode="highContrastSpectra"] .story-card::before {
+    opacity: .16;
+    background:
+      radial-gradient(circle at 32% 28%, rgba(0,229,255,.34), transparent 34%),
+      radial-gradient(circle at 70% 72%, rgba(181,108,255,.30), transparent 38%);
+  }
+
+  html[data-display-mode="highContrastSpectra"] .line-display {
+    color: #f8fbff;
+    outline: 2px solid rgba(0,229,255,.36);
+    outline-offset: 6px;
+  }
+
+  html[data-display-mode="highContrastSpectra"] .current-word {
+    color: #ffd166;
+    background: #050814;
+    box-shadow: 0 0 0 2px rgba(0,229,255,.62), 0 0 20px rgba(255,209,102,.18);
+  }
+
+  html[data-display-mode="highContrastWarm"] .display-control,
+  html[data-display-mode="highContrastWarm"] .typebar {
+    background: #16100c;
+    border-color: #ffb84d;
+    box-shadow: 0 0 22px rgba(255,184,77,.14);
+  }
+
+  html[data-display-mode="highContrastWarm"] .story-card {
+    background: #16100c;
+    border: 2px solid #ffb84d;
+    box-shadow: 0 0 30px rgba(255,184,77,.16);
+  }
+
+  html[data-display-mode="highContrastWarm"] .story-card::before {
+    opacity: .12;
+    background:
+      radial-gradient(circle at 32% 24%, rgba(255,204,102,.30), transparent 35%),
+      radial-gradient(circle at 72% 72%, rgba(255,145,77,.24), transparent 40%);
+  }
+
+  html[data-display-mode="highContrastWarm"] .line-display {
+    color: #fff3d6;
+    outline: 2px solid rgba(255,184,77,.42);
+    outline-offset: 6px;
+  }
+
+  html[data-display-mode="highContrastWarm"] .current-word {
+    color: #ffcc66;
+    background: #16100c;
+    box-shadow: 0 0 0 2px rgba(255,184,77,.58), 0 0 18px rgba(255,204,102,.16);
   }
 
   html[data-display-mode="plain"] .line-display {
@@ -532,7 +632,7 @@
     .actions { grid-template-columns: 1fr 1fr; }
     .topbar { align-items: flex-start; }
     .top-actions { flex-wrap: wrap; }
-    .display-control { flex: 1 1 220px; }
+    .display-control { flex: 1 1 260px; }
     .volume-control { flex: 1 1 260px; }
     .story-card {
       height: clamp(230px, 38vw, 320px);
@@ -589,12 +689,14 @@
     </div>
     <div class="top-actions">
       <section class="display-control" aria-labelledby="displayModeLabel">
-        <label id="displayModeLabel" class="label" for="displayModeSelect">Text Mode</label>
-        <select id="displayModeSelect" aria-label="Text color display mode">
+        <label id="displayModeLabel" class="label" for="displayModeSelect">Display Mode</label>
+        <select id="displayModeSelect" aria-label="Story display mode">
           <option value="plain">Plain</option>
           <option value="spectraColor">Spectra Color</option>
           <option value="colorblindFriendly">Colorblind Friendly</option>
-          <option value="highContrast">High Contrast</option>
+          <option value="highContrastPure">High Contrast Pure</option>
+          <option value="highContrastSpectra">High Contrast Spectra</option>
+          <option value="highContrastWarm">High Contrast Warm</option>
         </select>
       </section>
       <section class="volume-control" aria-labelledby="volumeLabel">
@@ -746,7 +848,12 @@ const DISPLAY_MODES = {
   plain: "Plain",
   spectraColor: "Spectra Color",
   colorblindFriendly: "Colorblind Friendly",
-  highContrast: "High Contrast"
+  highContrastPure: "High Contrast Pure",
+  highContrastSpectra: "High Contrast Spectra",
+  highContrastWarm: "High Contrast Warm"
+};
+const LEGACY_DISPLAY_MODE_MIGRATIONS = {
+  highContrast: "highContrastSpectra"
 };
 const DISPLAY_MODE_KEY = "spectramuseDisplayMode.v1";
 const DEFAULT_DISPLAY_MODE = "plain";
@@ -860,13 +967,18 @@ function updateAudioSettings({ persist = true } = {}) {
 audioSettings = loadAudioSettings();
 
 function normalizeDisplayMode(mode) {
+  if (LEGACY_DISPLAY_MODE_MIGRATIONS[mode]) return LEGACY_DISPLAY_MODE_MIGRATIONS[mode];
   return DISPLAY_MODES[mode] ? mode : DEFAULT_DISPLAY_MODE;
 }
 
 function loadDisplayMode() {
   try {
     const saved = window.localStorage && window.localStorage.getItem(DISPLAY_MODE_KEY);
-    return normalizeDisplayMode(saved);
+    const normalized = normalizeDisplayMode(saved);
+    if (saved && saved !== normalized) {
+      window.localStorage.setItem(DISPLAY_MODE_KEY, normalized);
+    }
+    return normalized;
   } catch {
     return DEFAULT_DISPLAY_MODE;
   }
@@ -1431,16 +1543,55 @@ const CANVAS_DISPLAY_COLORS = {
   spectraColor: ["#ffd27a", "#7bd3ff", "#f79ac8", "#bda2ff", "#8ee9d6", "#f8efe2"],
   colorblindFriendly: ["#56b4e9", "#e6ab02", "#cc79a7", "#00b8a9", "#f0e442", "#f8efe2"]
 };
+const CANVAS_HIGH_CONTRAST_STYLES = {
+  highContrastPure: {
+    background: "#000000",
+    cardFill: "#000000",
+    cardStroke: "#ffffff",
+    text: "#ffffff",
+    title: "#ffffff",
+    meta: "#ffffff",
+    glow: null
+  },
+  highContrastSpectra: {
+    background: "#050814",
+    cardFill: "#050814",
+    cardStroke: "#00e5ff",
+    text: "#f8fbff",
+    title: "#f8fbff",
+    meta: "#00e5ff",
+    glow: [
+      ["#00e5ff", 0.16, 0.30, 0.25],
+      ["#b56cff", 0.12, 0.72, 0.70]
+    ]
+  },
+  highContrastWarm: {
+    background: "#16100c",
+    cardFill: "#16100c",
+    cardStroke: "#ffb84d",
+    text: "#fff3d6",
+    title: "#fff3d6",
+    meta: "#ffcc66",
+    glow: [
+      ["#ffcc66", 0.15, 0.30, 0.24],
+      ["#ff914d", 0.10, 0.72, 0.72]
+    ]
+  }
+};
 
 function getCanvasDisplayColor(mode, index) {
   const palette = CANVAS_DISPLAY_COLORS[mode];
-  if (!palette) return mode === "highContrast" ? "#ffffff" : "#f8efe2";
+  if (!palette) return CANVAS_HIGH_CONTRAST_STYLES[mode]?.text || "#f8efe2";
   return palette[index % palette.length];
+}
+
+function getCanvasHighContrastStyle(mode) {
+  return CANVAS_HIGH_CONTRAST_STYLES[mode] || null;
 }
 
 function drawDisplayLine(targetCtx, line, centerX, y, mode, textSize) {
   if (mode !== "spectraColor" && mode !== "colorblindFriendly") {
-    targetCtx.fillStyle = mode === "highContrast" ? "#ffffff" : "#f8efe2";
+    targetCtx.fillStyle = getCanvasDisplayColor(mode, 0);
     targetCtx.fillText(line, centerX, y);
     return;
   }
@@ -1486,17 +1637,31 @@ function drawDisplayLine(targetCtx, line, centerX, y, mode, textSize) {
 
 function renderStoryFrame(targetCtx, width, height, text, localT, format="wide") {
   const mode = getDisplayMode();
-  const highContrast = mode === "highContrast";
+  const highContrastStyle = getCanvasHighContrastStyle(mode);
+  const highContrast = Boolean(highContrastStyle);
   drawField(targetCtx, width, height, localT, width / 1080);
-  targetCtx.fillStyle = highContrast ? "rgba(0, 0, 0, .64)" : "rgba(8, 7, 12, .30)";
+  targetCtx.fillStyle = highContrast ? highContrastStyle.background : "rgba(8, 7, 12, .30)";
   targetCtx.fillRect(0, 0, width, height);
+
+  if (highContrast && highContrastStyle.glow) {
+    highContrastStyle.glow.forEach(([color, alpha, x, y]) => {
+      const glow = targetCtx.createRadialGradient(
+        width * x, height * y, width * .04,
+        width * x, height * y, width * .42
+      );
+      glow.addColorStop(0, `${color}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`);
+      glow.addColorStop(1, `${color}00`);
+      targetCtx.fillStyle = glow;
+      targetCtx.fillRect(0, 0, width, height);
+    });
+  }
 
   const layout = getStoryFrameLayout(width, height, format);
   const { cardW, cardH, cardX, cardY, radius, titleSize, textSize, metaSize } = layout;
 
-  targetCtx.fillStyle = highContrast ? "rgba(0, 0, 0, .82)" : "rgba(8, 7, 12, .36)";
-  targetCtx.strokeStyle = highContrast ? "rgba(255, 255, 255, .76)" : "rgba(248, 239, 226, .18)";
-  targetCtx.lineWidth = Math.max(2, width * 0.0022);
+  targetCtx.fillStyle = highContrast ? highContrastStyle.cardFill : "rgba(8, 7, 12, .36)";
+  targetCtx.strokeStyle = highContrast ? highContrastStyle.cardStroke : "rgba(248, 239, 226, .18)";
+  targetCtx.lineWidth = highContrast ? Math.max(4, width * 0.0032) : Math.max(2, width * 0.0022);
   roundRect(targetCtx, cardX, cardY, cardW, cardH, radius, true, true);
 
   if (!highContrast) {
@@ -1510,7 +1675,7 @@ function renderStoryFrame(targetCtx, width, height, text, localT, format="wide")
     roundRect(targetCtx, cardX, cardY, cardW, cardH, radius, true, false);
   }
 
-  targetCtx.fillStyle = highContrast ? "#ffffff" : "rgba(248,239,226,.92)";
+  targetCtx.fillStyle = highContrast ? highContrastStyle.title : "rgba(248,239,226,.92)";
   targetCtx.textAlign = "center";
   targetCtx.textBaseline = "middle";
   targetCtx.font = `700 ${titleSize}px Courier New, monospace`;
@@ -1530,7 +1695,7 @@ function renderStoryFrame(targetCtx, width, height, text, localT, format="wide")
   targetCtx.shadowBlur = 0;
 
   targetCtx.font = `700 ${metaSize}px Courier New, monospace`;
-  targetCtx.fillStyle = "rgba(248,239,226,.78)";
+  targetCtx.fillStyle = highContrast ? highContrastStyle.meta : "rgba(248,239,226,.78)";
   targetCtx.fillText(
     `${state.texture} / ${soundName.textContent}`,
     width / 2,
@@ -2393,7 +2558,7 @@ A field of glass answered in blue fire.`;
 storyInput.addEventListener("input", updateFromTyping);
 displayModeSelect.addEventListener("change", () => {
   updateDisplayMode(displayModeSelect.value);
-  statusEl.textContent = `Text mode set to ${DISPLAY_MODES[getDisplayMode()]}.`;
+  statusEl.textContent = `Display mode set to ${DISPLAY_MODES[getDisplayMode()]}.`;
 });
 soundModeSelect.addEventListener("change", updateSoundReadout);
 

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build-static.mjs",
+    "test:export": "npm run build && node scripts/export-story-smoke.mjs",
     "preview": "npm run build && npx wrangler dev",
     "deploy:wrangler": "npm run build && npx wrangler deploy"
   },
