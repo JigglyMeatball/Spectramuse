@@ -149,7 +149,7 @@
       </div>
       <div class="field-card">
         <label class="label">Display mode</label>
-        <span class="select-wrap"><select data-bind="mode"><option value="plain">Plain</option><option value="color">Color Bloom</option><option value="scene">Scene</option></select></span>
+        <span class="select-wrap"><select data-bind="mode"><option value="plain">Plain</option><option value="color">Color Bloom</option><option value="scene">Scene</option><option value="storyboard">Storyboard</option></select></span>
       </div>
       <div class="field-card volume-grid">
         <button class="secondary" data-action="mute">Mute</button>
@@ -165,12 +165,17 @@ A field of glass answered in blue fire.</textarea></div>
       <div class="visual-card" aria-label="Lite animated preview"><div class="orb" data-orb></div><div class="wave" data-wave></div></div>
       <div class="action-stack">
         <button class="primary" data-action="previewStory">Preview Story</button>
+        <button class="secondary" data-action="previewScene">Preview Scene</button>
+        <button class="danger" data-action="saveMp4Story">Save MP4 Story</button>
+        <button class="secondary" data-action="saveMp4Scene">Save MP4 Scene</button>
+        <button class="secondary" data-action="saveImage">Save Image</button>
         <button class="secondary" data-action="copyCaption">Copy Caption</button>
         <button class="secondary" data-action="downloadStory">Download Story</button>
+        <button class="secondary" data-action="storyboard">Storyboard</button>
         <button class="secondary" data-action="loadSample">Load Sample</button>
         <button class="secondary" data-action="clearStory">Clear Story</button>
       </div>
-      <div class="status-box" data-status>Ready. Lite mode is on.</div>
+      <div class="status-box" data-status>Ready. Story videos will save as MP4.</div>
     </div>
   </section>
 
@@ -260,7 +265,6 @@ function activeMode() { return modeMap[state.mode] || modeMap.plain; }
 
 function render() {
   document.body.dataset.version = state.version;
-  if (state.version === 'lite' && state.mode === 'storyboard') state.mode = 'plain';
   const current = activeMode();
   const score = scoreText();
   const hue = (current.hue + score.vowels * 2) % 360;
@@ -338,7 +342,7 @@ document.addEventListener('click', (event) => {
 initWaves();
 state.version = requestedVersion();
 render();
-setStatus(state.version === 'lite' ? 'Ready. Lite mode is on.' : 'Ready. Studio mode is on.');
+setStatus(state.version === 'lite' ? 'Ready. Story videos will save as MP4.' : 'Ready. Studio mode is on.');
 </script>
 </body>
 </html>
