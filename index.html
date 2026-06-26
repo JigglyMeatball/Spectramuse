@@ -25,324 +25,644 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2309080b'/%3E%3Ccircle cx='22' cy='24' r='14' fill='%23ffcc7a'/%3E%3Ccircle cx='42' cy='40' r='16' fill='%237ac7ff' fill-opacity='.82'/%3E%3Cpath d='M17 45h30' stroke='%23f8efe2' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
 <style>
   :root {
-    --paper: #fff7e8;
-    --muted: rgba(255,247,232,.64);
-    --line: rgba(255,247,232,.18);
-    --panel: rgba(35,25,43,.9);
-    --panel-2: rgba(73,49,77,.64);
-    --hot: #ee52ec;
-    --danger: #ff5b5f;
-    --hue: 304;
-    --hue2: 196;
+    --ink: #f8efe2;
+    --muted: rgba(248,239,226,.68);
+    --line: rgba(255,255,255,.16);
+    --accent: #ffcc7a;
+    --hue: 32;
+    --hue2: 210;
   }
 
   * { box-sizing: border-box; }
-  html { background: #17141e; }
+
+  html { background: #09080b; }
+
   body {
     margin: 0;
     min-height: 100vh;
-    font-family: "Courier New", Courier, monospace;
-    color: var(--paper);
-    background:
-      radial-gradient(circle at 10% 2%, rgba(34,139,142,.45), transparent 38vw),
-      radial-gradient(circle at 88% 8%, rgba(156,55,205,.48), transparent 42vw),
-      radial-gradient(circle at 58% 100%, rgba(239,50,121,.42), transparent 44vw),
-      linear-gradient(145deg, #15141d, #2b1733 50%, #612334);
-    background-attachment: fixed;
     overflow-x: hidden;
+    font-family: "Courier New", Courier, monospace;
+    color: var(--ink);
+    background: #09080b;
   }
 
-  body::before {
-    content: "";
+  #stage {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .grain {
     position: fixed;
     inset: 0;
     pointer-events: none;
-    opacity: .16;
+    opacity: .22;
     mix-blend-mode: overlay;
     background-image:
-      linear-gradient(115deg, transparent 0 48%, rgba(255,255,255,.22) 49%, transparent 50% 100%),
-      radial-gradient(circle at 20% 30%, rgba(255,255,255,.16) 0 1px, transparent 1px);
-    background-size: 58px 58px, 7px 7px;
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,.13) 0 1px, transparent 1px),
+      radial-gradient(circle at 70% 60%, rgba(0,0,0,.2) 0 1px, transparent 1px);
+    background-size: 5px 5px, 7px 7px;
+    animation: crawl 1.5s steps(4) infinite;
+    z-index: 1;
   }
 
-  main { position: relative; z-index: 1; }
-  .lite-view, .studio-view { width: min(1180px, calc(100vw - 28px)); margin: 18px auto 28px; }
-  body[data-version="lite"] .studio-view { display: none; }
-  body[data-version="studio"] .lite-view { display: none; }
-
-  .panel, .card {
-    border: 1px solid var(--line);
-    border-radius: 34px;
-    background: linear-gradient(150deg, rgba(33,27,41,.94), rgba(44,23,48,.9));
-    box-shadow: 0 28px 120px rgba(0,0,0,.46);
-    backdrop-filter: blur(12px);
+  @keyframes crawl {
+    from { transform: translate(0,0); }
+    to { transform: translate(-12px, 9px); }
   }
 
-  .lite-card { max-width: 780px; margin: 0 auto; padding: clamp(26px, 6vw, 46px); }
-  .lite-card h1, .studio-head h1 { margin: 0; font-size: clamp(50px, 12vw, 88px); line-height: .92; letter-spacing: -.07em; text-shadow: 0 4px 0 rgba(0,0,0,.18); }
-  .tagline { margin: 22px 0 28px; color: rgba(255,247,232,.68); font-size: clamp(22px, 5vw, 33px); line-height: 1.35; }
+  .studio {
+    position: relative;
+    z-index: 2;
+    width: min(1180px, calc(100vw - 28px));
+    min-height: calc(100vh - 28px);
+    margin: 14px auto;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 28px;
+    background: linear-gradient(145deg, rgba(9,8,11,.82), rgba(44,22,51,.45));
+    box-shadow: 0 24px 120px rgba(0,0,0,.62);
+    backdrop-filter: blur(14px);
+    display: grid;
+    grid-template-columns: minmax(320px, .95fr) minmax(320px, 1.05fr);
+    gap: 14px;
+  }
 
-  .mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 24px; padding: 8px; border: 1px solid rgba(255,247,232,.18); border-radius: 999px; background: rgba(0,0,0,.18); }
-  .mode-switch button { min-height: 54px; border-radius: 999px; color: var(--paper); background: transparent; border: 0; font-size: 19px; font-weight: 900; cursor: pointer; }
-  body[data-version="lite"] .lite-toggle, body[data-version="studio"] .studio-toggle { color: #1a101d; background: var(--hot); }
+  .panel {
+    min-height: 0;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 22px;
+    background: rgba(0,0,0,.24);
+    overflow: hidden;
+  }
 
-  .field-card, .story-card, .sound-card, .scene-card, .status-box, .visual-card { border: 1px solid rgba(255,247,232,.18); border-radius: 28px; background: var(--panel-2); box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
-  .field-card { padding: 24px; margin-bottom: 24px; }
-  .label { display: block; margin: 0 0 18px; color: rgba(255,247,232,.54); font-size: 17px; letter-spacing: .42em; text-transform: uppercase; }
+  .writer {
+    display: flex;
+    flex-direction: column;
+  }
 
-  select, textarea, input, button { font-family: "Courier New", Courier, monospace; }
-  .select-wrap { min-height: 70px; border: 1px solid rgba(255,247,232,.24); border-radius: 24px; background: rgba(255,255,255,.08); display: flex; align-items: center; padding: 0 22px; }
-  select { width: 100%; border: 0; outline: 0; color: var(--paper); background: transparent; font-size: clamp(23px, 3vw, 32px); font-weight: 800; }
+  header {
+    padding: 16px 18px 10px;
+    border-bottom: 1px solid rgba(255,255,255,.13);
+  }
 
-  .volume-grid { display: grid; grid-template-columns: minmax(120px, 190px) 1fr; align-items: center; gap: 20px; }
-  .volume-head { display: flex; justify-content: space-between; align-items: center; grid-column: 2 / 3; color: var(--muted); letter-spacing: .38em; text-transform: uppercase; font-size: 16px; }
-  .volume-value { color: var(--hot); letter-spacing: .08em; }
-  input[type="range"] { width: 100%; accent-color: var(--hot); }
+  h1 {
+    margin: 0;
+    font-size: clamp(32px, 5vw, 62px);
+    letter-spacing: -.06em;
+    line-height: .92;
+  }
 
-  .primary, .secondary, .danger { width: 100%; min-height: 74px; border: 0; border-radius: 24px; padding: 18px 22px; color: #1a101d; background: var(--hot); font-weight: 900; font-size: clamp(21px, 3vw, 30px); letter-spacing: .01em; cursor: pointer; }
-  .secondary { color: var(--paper); border: 1px solid rgba(255,247,232,.20); background: rgba(95,61,91,.66); }
-  .danger { color: white; background: linear-gradient(180deg, #ff686d, #ff4e56); }
+  .tagline {
+    margin: 10px 0 0;
+    color: rgba(248,239,226,.72);
+    line-height: 1.35;
+  }
+
+  .mode-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 6px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 999px;
+    background: rgba(255,255,255,.05);
+  }
+
+  .mode-switch button {
+    min-height: 38px;
+    padding: 8px 10px;
+    color: var(--ink);
+    background: transparent;
+  }
+
+  body[data-version="lite"] #liteToggle,
+  body[data-version="studio"] #studioToggle {
+    color: #09080b;
+    background: var(--accent);
+  }
+
+  textarea {
+    flex: 1;
+    width: 100%;
+    min-height: 260px;
+    resize: vertical;
+    border: 0;
+    outline: none;
+    padding: 18px;
+    color: var(--ink);
+    background: transparent;
+    font: 18px/1.5 "Courier New", Courier, monospace;
+  }
+
+  .controls,
+  .settings {
+    display: grid;
+    gap: 9px;
+    padding: 12px 18px 0;
+  }
+
+  .controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .settings {
+    grid-template-columns: 1fr 1fr;
+    padding-bottom: 16px;
+    border-top: 1px solid rgba(255,255,255,.13);
+  }
+
+  .field {
+    display: grid;
+    gap: 7px;
+    color: rgba(248,239,226,.68);
+    font-size: 12px;
+  }
+
+  button,
+  select,
+  input[type="range"] {
+    font: 700 14px/1 "Courier New", Courier, monospace;
+  }
+
+  button,
+  .select-wrap {
+    min-height: 44px;
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: 999px;
+  }
+
+  button {
+    cursor: pointer;
+    padding: 11px 13px;
+    color: #09080b;
+    background: var(--accent);
+  }
+
+  button.secondary {
+    color: var(--ink);
+    background: rgba(255,255,255,.08);
+  }
+
+  button.ghost {
+    color: rgba(248,239,226,.74);
+    background: rgba(0,0,0,.16);
+  }
+
+  button.danger {
+    color: white;
+    background: linear-gradient(180deg, #ff686d, #ff4e56);
+  }
+
   button:active { transform: translateY(1px); }
 
-  .story-card, .sound-card, .visual-card { padding: 26px; margin-top: 24px; }
-  textarea { width: 100%; min-height: 300px; resize: vertical; border: 0; outline: 0; border-radius: 22px; padding: 28px; color: var(--paper); background: rgba(24,15,28,.72); font-size: clamp(26px, 3.2vw, 39px); line-height: 1.42; font-weight: 800; }
-  .sound-card p { margin: 0; color: rgba(255,247,232,.86); font-size: clamp(22px, 3vw, 34px); line-height: 1.45; }
+  .select-wrap {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    background: rgba(255,255,255,.06);
+  }
 
-  .visual-card, .scene-card { min-height: 280px; position: relative; overflow: hidden; display: grid; place-items: center; }
-  .visual-card { margin-bottom: 24px; }
-  .orb { width: min(56vw, 320px); height: min(56vw, 320px); border-radius: 50%; background: radial-gradient(circle at 33% 28%, hsla(var(--hue),100%,78%,.96), transparent 30%), radial-gradient(circle at 70% 70%, hsla(var(--hue2),100%,72%,.82), transparent 38%), conic-gradient(from 90deg, hsla(var(--hue),100%,62%,.95), hsla(var(--hue2),100%,62%,.78), hsla(var(--hue),100%,62%,.95)); box-shadow: 0 0 90px hsla(var(--hue),100%,70%,.42); animation: breathe 4.8s ease-in-out infinite; }
-  .wave { position: absolute; left: 22px; right: 22px; bottom: 24px; height: 110px; display: flex; align-items: end; gap: 7px; }
-  .bar { flex: 1; border-radius: 999px; min-width: 4px; background: linear-gradient(to top, hsla(var(--hue2),100%,70%,.34), hsla(var(--hue),100%,73%,.92)); animation: pulse 800ms ease-in-out infinite alternate; }
+  select {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    color: var(--ink);
+    background: transparent;
+  }
 
-  .action-stack { display: grid; gap: 18px; }
-  .status-box { margin-top: 24px; padding: 22px 28px; color: rgba(255,247,232,.62); font-size: clamp(20px, 2.6vw, 30px); line-height: 1.35; }
+  input[type="range"] {
+    accent-color: var(--accent);
+    width: 100%;
+  }
 
-  .studio-grid { display: grid; grid-template-columns: minmax(360px, .9fr) minmax(380px, 1.1fr); gap: 18px; }
-  .studio-head, .studio-tools { padding: clamp(24px, 4vw, 44px); align-self: start; }
-  .studio-workspace { padding: 28px; display: grid; gap: 24px; }
-  .scene-card { min-height: 420px; margin-top: 0; }
+  .visualizer {
+    position: relative;
+    overflow: hidden;
+    min-height: 620px;
+  }
 
-  @keyframes breathe { 0%,100% { transform: scale(.92) rotate(0deg); } 50% { transform: scale(1.12) rotate(16deg); } }
-  @keyframes pulse { from { transform: scaleY(.25); opacity: .45; } to { transform: scaleY(1); opacity: .95; } }
+  .visual-copy {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 18px;
+    z-index: 3;
+  }
+
+  .visual-copy p {
+    margin: 0;
+    color: rgba(248,239,226,.68);
+    line-height: 1.45;
+  }
+
+  .eyebrow {
+    margin: 0 0 8px;
+    color: var(--accent);
+    font-size: 12px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+  }
+
+  .orb {
+    position: absolute;
+    width: 34vmin;
+    height: 34vmin;
+    border-radius: 50%;
+    left: 50%;
+    top: 46%;
+    transform: translate(-50%, -50%);
+    background:
+      radial-gradient(circle at 34% 32%, hsla(var(--hue), 100%, 76%, .96), transparent 28%),
+      radial-gradient(circle at 64% 68%, hsla(var(--hue2), 100%, 72%, .82), transparent 34%),
+      conic-gradient(from 90deg, hsla(var(--hue),100%,60%,.9), hsla(var(--hue2),100%,62%,.8), hsla(var(--hue),100%,60%,.9));
+    filter: blur(.2px) saturate(1.25);
+    box-shadow: 0 0 90px hsla(var(--hue), 100%, 70%, .45);
+    animation: breathe 5s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: translate(-50%, -50%) scale(.9) rotate(0deg); }
+    50% { transform: translate(-50%, -50%) scale(1.12) rotate(14deg); }
+  }
+
+  .wave {
+    position: absolute;
+    inset: auto 20px 28px;
+    height: 140px;
+    display: flex;
+    align-items: end;
+    gap: 7px;
+  }
+
+  .bar {
+    flex: 1;
+    min-width: 4px;
+    border-radius: 999px;
+    background: linear-gradient(to top, hsla(var(--hue2),100%,70%,.35), hsla(var(--hue),100%,76%,.9));
+    transform-origin: bottom;
+    animation: pulse 900ms ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse {
+    from { transform: scaleY(.25); opacity: .45; }
+    to { transform: scaleY(1); opacity: .95; }
+  }
+
+  .status-card {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 184px;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .readout {
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 16px;
+    padding: 10px;
+    background: rgba(0,0,0,.25);
+  }
+
+  .readout strong {
+    display: block;
+    font-size: 18px;
+    color: var(--accent);
+  }
+
+  .readout span {
+    display: block;
+    margin-top: 4px;
+    color: rgba(248,239,226,.62);
+    font-size: 11px;
+  }
+
+  .status {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 152px;
+    z-index: 3;
+    color: rgba(248,239,226,.72);
+    font-size: 13px;
+  }
+
+  body[data-version="lite"] .studio-only { display: none !important; }
+  body[data-version="studio"] .lite-only { display: none !important; }
 
   @media (max-width: 820px) {
-    .lite-view, .studio-view { width: calc(100vw - 28px); margin: 14px auto 24px; }
-    .studio-grid { grid-template-columns: 1fr; }
-    .studio-head, .studio-tools, .studio-workspace, .lite-card { padding: 28px; }
-    h1, .lite-card h1, .studio-head h1 { font-size: clamp(48px, 13vw, 72px); }
-    .tagline { font-size: clamp(24px, 6vw, 32px); }
-    .field-card { padding: 22px; }
-    textarea { min-height: 360px; }
-    .scene-card, .visual-card { min-height: 360px; }
+    .studio {
+      width: calc(100vw - 20px);
+      min-height: auto;
+      margin: 10px auto;
+      border-radius: 22px;
+      padding: 10px;
+      grid-template-columns: 1fr;
+    }
+
+    h1 { font-size: clamp(42px, 13vw, 62px); }
+    .tagline { font-size: 14px; }
+    textarea { min-height: 245px; font-size: 16px; }
+    .settings { grid-template-columns: 1fr; }
+    .visualizer { min-height: 430px; }
+    .orb { width: 62vmin; height: 62vmin; }
+    .wave { height: 100px; inset: auto 12px 18px; gap: 5px; }
+    .status-card { left: 12px; right: 12px; bottom: 154px; gap: 7px; }
+    .readout { padding: 8px; }
+    .readout strong { font-size: 15px; }
+    .readout span { font-size: 10px; }
+    .status { left: 12px; right: 12px; bottom: 124px; font-size: 12px; }
+  }
+
+  @media (max-width: 470px) {
+    .controls { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body data-version="lite">
-<main>
-  <section class="lite-view" aria-label="SpectraMuse Lite">
-    <div class="panel lite-card">
+<canvas id="stage"></canvas>
+<div class="grain"></div>
+<main class="studio">
+  <section class="panel writer">
+    <header>
       <h1>SpectraMuse</h1>
-      <p class="tagline">Where stories become color, sound, and motion.</p>
+      <p class="tagline">A synesthetic typewriter for living stories. Write a line. Watch it bloom into color, motion, and sound.</p>
       <div class="mode-switch" aria-label="Choose Lite or Studio">
-        <button class="lite-toggle" type="button" data-version-target="lite">Lite</button>
-        <button class="studio-toggle" type="button" data-version-target="studio">Studio</button>
+        <button id="liteToggle" type="button" data-version-target="lite">Lite</button>
+        <button id="studioToggle" type="button" data-version-target="studio">Studio</button>
       </div>
-      <div class="field-card">
-        <label class="label">Display mode</label>
-        <span class="select-wrap"><select data-bind="mode"><option value="plain">Plain</option><option value="color">Color Bloom</option><option value="scene">Scene</option><option value="storyboard">Storyboard</option></select></span>
-      </div>
-      <div class="field-card volume-grid">
-        <button class="secondary" data-action="mute">Mute</button>
-        <div class="volume-head"><span>Volume</span><span class="volume-value" data-bind="volumeLabel">80%</span></div>
-        <input data-bind="volume" type="range" min="0" max="100" value="80" />
-      </div>
-      <button class="primary" data-action="setup">Setup</button>
-      <div class="story-card"><label class="label">Write</label><textarea data-bind="story">The moon opened like a silver eye.
-Moss climbed the old stone door.
-Thunder wrote its name across the sky.
-A field of glass answered in blue fire.</textarea></div>
-      <div class="sound-card"><span class="label">Sound</span><p data-bind="sound">Muse Bell: soft bell, warm drone / 197 Hz root</p></div>
-      <div class="visual-card" aria-label="Lite animated preview"><div class="orb" data-orb></div><div class="wave" data-wave></div></div>
-      <div class="action-stack">
-        <button class="primary" data-action="previewStory">Preview Story</button>
-        <button class="secondary" data-action="previewScene">Preview Scene</button>
-        <button class="danger" data-action="saveMp4Story">Save MP4 Story</button>
-        <button class="secondary" data-action="saveMp4Scene">Save MP4 Scene</button>
-        <button class="secondary" data-action="saveImage">Save Image</button>
-        <button class="secondary" data-action="copyCaption">Copy Caption</button>
-        <button class="secondary" data-action="downloadStory">Download Story</button>
-        <button class="secondary" data-action="storyboard">Storyboard</button>
-        <button class="secondary" data-action="loadSample">Load Sample</button>
-        <button class="secondary" data-action="clearStory">Clear Story</button>
-      </div>
-      <div class="status-box" data-status>Ready. Story videos will save as MP4.</div>
+    </header>
+
+    <textarea id="story" spellcheck="true">The moon found a hidden door in the lake, and every ripple sang in blue.</textarea>
+
+    <div class="controls">
+      <button data-action="play">Play feeling</button>
+      <button class="secondary studio-only" data-action="stop">Stop sound</button>
+      <button class="secondary" data-action="sample">New sample</button>
+      <button class="secondary lite-only" data-action="copy">Copy story</button>
+      <button class="secondary studio-only" data-action="previewScene">Preview Scene</button>
+      <button class="danger studio-only" data-action="saveMp4Story">Save MP4 Story</button>
+      <button class="secondary studio-only" data-action="saveMp4Scene">Save MP4 Scene</button>
+      <button class="secondary studio-only" data-action="saveImage">Save Image</button>
+      <button class="secondary studio-only" data-action="copy">Copy Caption</button>
+      <button class="secondary studio-only" data-action="save">Download Story</button>
+      <button class="secondary studio-only" data-action="storyboard">Storyboard</button>
+      <button class="ghost" data-action="clear">Clear</button>
+    </div>
+
+    <div class="settings">
+      <label class="field">Mood palette
+        <span class="select-wrap">
+          <select id="palette">
+            <option value="classic">Classic glow</option>
+            <option value="dream">Dream lake</option>
+            <option value="storm">Storm page</option>
+            <option value="ember">Ember room</option>
+          </select>
+        </span>
+      </label>
+      <label class="field">Motion intensity
+        <input id="intensity" type="range" min="25" max="100" value="74" />
+      </label>
     </div>
   </section>
 
-  <section class="studio-view" aria-label="SpectraMuse Studio">
-    <div class="studio-grid">
-      <section class="panel studio-head">
-        <h1>SpectraMuse</h1>
-        <p class="tagline">Full Studio: all tones, animations, previews, storyboard, and export tools.</p>
-        <div class="mode-switch" aria-label="Choose Lite or Studio">
-          <button class="lite-toggle" type="button" data-version-target="lite">Lite</button>
-          <button class="studio-toggle" type="button" data-version-target="studio">Studio</button>
-        </div>
-        <div class="field-card"><label class="label">Display mode</label><span class="select-wrap"><select data-bind="mode"><option value="plain">Plain</option><option value="color">Color Bloom</option><option value="scene">Scene</option><option value="storyboard">Storyboard</option></select></span></div>
-        <div class="field-card volume-grid"><button class="secondary" data-action="mute">Mute</button><div class="volume-head"><span>Volume</span><span class="volume-value" data-bind="volumeLabel">80%</span></div><input data-bind="volume" type="range" min="0" max="100" value="80" /></div>
-        <button class="primary" data-action="setup">Setup</button>
-      </section>
-      <section class="panel studio-workspace">
-        <div class="story-card"><label class="label">Write</label><textarea data-bind="story">The moon opened like a silver eye.
-Moss climbed the old stone door.
-Thunder wrote its name across the sky.
-A field of glass answered in blue fire.</textarea></div>
-        <div class="sound-card"><span class="label">Sound</span><p data-bind="sound">Muse Bell: soft bell, warm drone / 197 Hz root</p></div>
-        <div class="scene-card" aria-label="Studio animated preview"><div class="orb" data-orb></div><div class="wave" data-wave></div></div>
-        <div class="action-stack">
-          <button class="primary" data-action="previewStory">Preview Story</button>
-          <button class="secondary" data-action="previewScene">Preview Scene</button>
-          <button class="danger" data-action="saveMp4Story">Save MP4 Story</button>
-          <button class="secondary" data-action="saveMp4Scene">Save MP4 Scene</button>
-          <button class="secondary" data-action="saveImage">Save Image</button>
-          <button class="secondary" data-action="copyCaption">Copy Caption</button>
-          <button class="secondary" data-action="downloadStory">Download Story</button>
-          <button class="secondary" data-action="storyboard">Storyboard</button>
-          <button class="secondary" data-action="loadSample">Load Sample</button>
-          <button class="secondary" data-action="clearStory">Clear Story</button>
-        </div>
-        <div class="status-box" data-status>Ready. Studio mode is on.</div>
-      </section>
+  <section class="panel visualizer" aria-label="Story visualizer">
+    <div class="visual-copy">
+      <p class="eyebrow">Living preview</p>
+      <p>Vowels warm the light. Consonants sharpen the texture. Emotion bends the wave.</p>
     </div>
+    <div class="orb" id="orb"></div>
+    <div class="status-card" aria-label="Mood signature">
+      <div class="readout"><strong id="hueReadout">0</strong><span>hue</span></div>
+      <div class="readout"><strong id="textureReadout">0</strong><span>texture</span></div>
+      <div class="readout"><strong id="intensityReadout">0%</strong><span>intensity</span></div>
+    </div>
+    <p class="status" id="status">Ready.</p>
+    <div class="wave" id="wave"></div>
   </section>
 </main>
 <script>
-const state = {
-  version: 'lite', mode: 'plain', volume: 80, muted: false,
-  story: `The moon opened like a silver eye.\nMoss climbed the old stone door.\nThunder wrote its name across the sky.\nA field of glass answered in blue fire.`
-};
+const text = document.getElementById('story');
+const orb = document.getElementById('orb');
+const wave = document.getElementById('wave');
+const status = document.getElementById('status');
+const canvas = document.getElementById('stage');
+const ctx = canvas.getContext('2d');
+const palette = document.getElementById('palette');
+const intensity = document.getElementById('intensity');
+const hueReadout = document.getElementById('hueReadout');
+const textureReadout = document.getElementById('textureReadout');
+const intensityReadout = document.getElementById('intensityReadout');
 let audioContext;
 let currentOscillator;
 let sampleIndex = 0;
-const samples = [state.story, `The library breathed violet dust.\nEvery book blinked awake.\nA bell rang under the floorboards.\nThe room became a small bright planet.`, `Rain stitched silver lines across the window.\nA fox of light crossed the road.\nThe clouds hummed in copper.\nNight unfolded its soft black map.`];
-const modeMap = {
-  plain: { name: 'Muse Bell', hue: 304, hue2: 196, root: 197, text: 'soft bell, warm drone', type: 'sine' },
-  color: { name: 'Color Bloom', hue: 24, hue2: 198, root: 222, text: 'bright shimmer, glass pulse', type: 'triangle' },
-  scene: { name: 'Scene Lantern', hue: 44, hue2: 278, root: 174, text: 'low lantern, slow wave', type: 'sawtooth' },
-  storyboard: { name: 'Storyboard', hue: 330, hue2: 158, root: 207, text: 'frame clicks, glowing chorus', type: 'triangle' }
+
+const samples = [
+  'The moon found a hidden door in the lake, and every ripple sang in blue.',
+  'A velvet thunderstorm rolled across the library while the lamps learned to hum.',
+  'She folded sunlight into her pocket and walked home through a forest of bells.',
+  'The city breathed neon, soft rain, and tiny golden static after midnight.'
+];
+
+const palettes = {
+  classic: { hueShift: 18, hue2Shift: 190, accent: '#ffcc7a', type: 'triangle', base: 180 },
+  dream: { hueShift: 206, hue2Shift: 282, accent: '#7ac7ff', type: 'sine', base: 210 },
+  storm: { hueShift: 254, hue2Shift: 38, accent: '#c5b7ff', type: 'sawtooth', base: 145 },
+  ember: { hueShift: 8, hue2Shift: 158, accent: '#ff9a6b', type: 'triangle', base: 168 }
 };
 
-function initWaves() {
-  document.querySelectorAll('[data-wave]').forEach((wave) => {
-    wave.innerHTML = '';
-    for (let i = 0; i < 32; i++) {
-      const bar = document.createElement('div');
-      bar.className = 'bar';
-      bar.style.height = `${18 + Math.random() * 90}px`;
-      bar.style.animationDelay = `${Math.random() * 800}ms`;
-      wave.appendChild(bar);
-    }
-  });
+for (let i = 0; i < 34; i++) {
+  const bar = document.createElement('div');
+  bar.className = 'bar';
+  bar.style.height = `${20 + Math.random() * 130}px`;
+  bar.style.animationDelay = `${Math.random() * 900}ms`;
+  bar.style.animationDuration = `${620 + Math.random() * 900}ms`;
+  wave.appendChild(bar);
 }
 
-function requestedVersion() {
-  const urlMode = new URLSearchParams(location.search).get('mode');
+function getRequestedVersion() {
+  const params = new URLSearchParams(location.search);
+  const urlMode = params.get('mode');
   if (urlMode === 'studio' || urlMode === 'lite') return urlMode;
   return localStorage.getItem('spectramuse-version') || 'lite';
 }
 
-function scoreText() {
-  const letters = state.story.toLowerCase().replace(/[^a-z]/g, '');
+function setVersion(version, save = true) {
+  const chosen = version === 'studio' ? 'studio' : 'lite';
+  document.body.dataset.version = chosen;
+  document.getElementById('liteToggle').setAttribute('aria-pressed', String(chosen === 'lite'));
+  document.getElementById('studioToggle').setAttribute('aria-pressed', String(chosen === 'studio'));
+  if (save) localStorage.setItem('spectramuse-version', chosen);
+  status.textContent = chosen === 'lite' ? 'Lite mode is on. Full tones and animation are active.' : 'Studio mode is on. Full controls unlocked.';
+  renderMood();
+}
+
+function scoreWords(value) {
+  const letters = value.toLowerCase().replace(/[^a-z]/g, '');
   const vowels = (letters.match(/[aeiou]/g) || []).length;
   const consonants = Math.max(letters.length - vowels, 1);
-  const density = Math.min(1, state.story.length / 360);
-  return { vowels, consonants, density };
+  const warmth = Math.round((vowels / Math.max(letters.length, 1)) * 360);
+  const density = Math.min(1, value.length / 280);
+  return { warmth, density, consonants };
 }
 
-function setStatus(message) { document.querySelectorAll('[data-status]').forEach((el) => { el.textContent = message; }); }
-function stopSound() { if (currentOscillator) { try { currentOscillator.stop(); } catch (error) {} currentOscillator = null; } }
-function activeMode() { return modeMap[state.mode] || modeMap.plain; }
+function renderMood() {
+  const s = scoreWords(text.value);
+  const p = palettes[palette.value] || palettes.classic;
+  const motion = Number(intensity.value) / 100;
+  const hue = (s.warmth + p.hueShift) % 360;
+  const hue2 = (s.consonants * 11 + p.hue2Shift) % 360;
 
-function render() {
-  document.body.dataset.version = state.version;
-  const current = activeMode();
-  const score = scoreText();
-  const hue = (current.hue + score.vowels * 2) % 360;
-  const hue2 = (current.hue2 + score.consonants) % 360;
-  document.documentElement.style.setProperty('--hue', hue);
-  document.documentElement.style.setProperty('--hue2', hue2);
-  document.querySelectorAll('[data-bind="story"]').forEach((el) => { if (el.value !== state.story) el.value = state.story; });
-  document.querySelectorAll('[data-bind="mode"]').forEach((el) => { if (el.value !== state.mode) el.value = state.mode; });
-  document.querySelectorAll('[data-bind="volume"]').forEach((el) => { if (Number(el.value) !== state.volume) el.value = state.volume; });
-  document.querySelectorAll('[data-bind="volumeLabel"]').forEach((el) => { el.textContent = `${state.volume}%`; });
-  document.querySelectorAll('[data-bind="sound"]').forEach((el) => { el.textContent = `${current.name}: ${current.text} / ${current.root} Hz root`; });
-  document.querySelectorAll('[data-orb]').forEach((orb) => { const size = 250 + score.density * 120; orb.style.width = `${size}px`; orb.style.height = `${size}px`; });
-  document.querySelectorAll('[data-wave]').forEach((wave) => [...wave.children].forEach((bar, i) => { const h = 18 + Math.abs(Math.sin((i + score.consonants) * .42)) * (70 + score.density * 72); bar.style.height = `${h}px`; }));
+  document.documentElement.style.setProperty('--hue', String(hue));
+  document.documentElement.style.setProperty('--hue2', String(hue2));
+  document.documentElement.style.setProperty('--accent', p.accent);
+
+  const size = 26 + s.density * 20 + motion * 8;
+  orb.style.width = `${size}vmin`;
+  orb.style.height = `${size}vmin`;
+  orb.style.animationDuration = `${6.2 - motion * 2.6}s`;
+
+  [...wave.children].forEach((bar, i) => {
+    const h = 16 + Math.abs(Math.sin((i + s.consonants) * .47)) * (62 + s.density * 110) * motion;
+    bar.style.height = `${h}px`;
+  });
+
+  hueReadout.textContent = String(s.warmth);
+  textureReadout.textContent = String(s.consonants);
+  intensityReadout.textContent = `${Math.round(s.density * 100)}%`;
 }
 
-function setVersion(version) {
-  state.version = version === 'studio' ? 'studio' : 'lite';
-  localStorage.setItem('spectramuse-version', state.version);
-  render();
-  setStatus(state.version === 'lite' ? 'Lite mode is on. Full tones and animation are active.' : 'Studio mode is on. Full controls unlocked.');
+function stopSound() {
+  if (currentOscillator) {
+    try { currentOscillator.stop(); } catch (error) {}
+    currentOscillator = null;
+  }
 }
 
-function playTone(label) {
-  render(); stopSound();
-  if (state.muted || state.volume === 0) { setStatus(`${label}. Sound is muted.`); return; }
+function playFeeling(label = 'Playing a soft browser-generated tone map.') {
+  renderMood();
+  stopSound();
   const AudioContext = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContext) { setStatus(`${label}. Audio is not supported in this browser.`); return; }
+  if (!AudioContext) {
+    status.textContent = 'Audio is not supported in this browser.';
+    return;
+  }
   audioContext = audioContext || new AudioContext();
-  const current = activeMode();
   const osc = audioContext.createOscillator();
   const gain = audioContext.createGain();
-  osc.type = current.type;
-  osc.frequency.value = current.root + scoreText().vowels * 3;
+  const s = scoreWords(text.value);
+  const p = palettes[palette.value] || palettes.classic;
+  const motion = Number(intensity.value) / 100;
+  osc.type = p.type;
+  osc.frequency.value = p.base + s.warmth * 1.8 + motion * 80;
   gain.gain.setValueAtTime(.0001, audioContext.currentTime);
-  gain.gain.exponentialRampToValueAtTime((state.volume / 100) * .12, audioContext.currentTime + .05);
-  gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + 1.1);
+  gain.gain.exponentialRampToValueAtTime(.11 * motion, audioContext.currentTime + .04);
+  gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + 1.05);
   osc.connect(gain).connect(audioContext.destination);
-  osc.start(); osc.stop(audioContext.currentTime + 1.12); currentOscillator = osc;
-  setStatus(`${label}.`);
+  osc.start();
+  osc.stop(audioContext.currentTime + 1.08);
+  currentOscillator = osc;
+  status.textContent = label;
 }
 
-function download(filename, body, type) { const blob = new Blob([body], { type }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = filename; link.click(); URL.revokeObjectURL(link.href); }
-function caption() { return `SpectraMuse scene: ${state.story.trim().replace(/\s+/g, ' ').slice(0, 220)}`; }
-async function copyCaption() { try { await navigator.clipboard.writeText(caption()); setStatus('Caption copied.'); } catch (error) { setStatus('Copy failed. Select text manually and copy.'); } }
+async function copyStory() {
+  try {
+    await navigator.clipboard.writeText(text.value);
+    status.textContent = 'Story copied to clipboard.';
+  } catch (error) {
+    text.focus();
+    text.select();
+    status.textContent = 'Copy shortcut ready: press Command+C or Ctrl+C.';
+  }
+}
+
+function saveStory() {
+  const blob = new Blob([text.value], { type: 'text/plain' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'spectramuse-story.txt';
+  link.click();
+  URL.revokeObjectURL(link.href);
+  status.textContent = 'Story text downloaded.';
+}
+
+function nextSample() {
+  sampleIndex = (sampleIndex + 1) % samples.length;
+  text.value = samples[sampleIndex];
+  renderMood();
+  status.textContent = 'Sample loaded.';
+}
+
+function saveImage() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect width="1200" height="630" fill="#09080b"/><circle cx="420" cy="260" r="190" fill="hsl(${getComputedStyle(document.documentElement).getPropertyValue('--hue')},90%,62%)" opacity=".72"/><circle cx="780" cy="360" r="210" fill="hsl(${getComputedStyle(document.documentElement).getPropertyValue('--hue2')},90%,62%)" opacity=".58"/><text x="80" y="150" fill="#f8efe2" font-family="Courier New" font-size="76" font-weight="700">SpectraMuse</text><text x="80" y="232" fill="#f8efe2" opacity=".74" font-family="Courier New" font-size="34">Where stories become color, sound, and motion.</text></svg>`;
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'spectramuse-scene.svg';
+  link.click();
+  URL.revokeObjectURL(link.href);
+  status.textContent = 'Image saved as SVG.';
+}
 
 function handleAction(action) {
-  if (action === 'mute') { state.muted = !state.muted; stopSound(); document.querySelectorAll('[data-action="mute"]').forEach((b) => b.textContent = state.muted ? 'Unmute' : 'Mute'); setStatus(state.muted ? 'Muted.' : 'Sound restored.'); }
-  if (action === 'setup') { render(); setStatus('Setup complete.'); }
-  if (action === 'previewStory') playTone('Previewing story');
-  if (action === 'previewScene') playTone('Previewing scene');
-  if (action === 'saveMp4Story') setStatus('MP4 story export is staged for the next engine build.');
-  if (action === 'saveMp4Scene') setStatus('MP4 scene export is staged for the next engine build.');
-  if (action === 'saveImage') { const current = activeMode(); const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect width="1200" height="630" fill="#17141e"/><circle cx="420" cy="260" r="190" fill="hsl(${current.hue},90%,62%)" opacity=".72"/><circle cx="780" cy="360" r="210" fill="hsl(${current.hue2},90%,62%)" opacity=".58"/><text x="80" y="150" fill="#fff7e8" font-family="Courier New" font-size="76" font-weight="700">SpectraMuse</text><text x="80" y="232" fill="#fff7e8" opacity=".74" font-family="Courier New" font-size="34">Where stories become color, sound, and motion.</text></svg>`; download('spectramuse-scene.svg', svg, 'image/svg+xml'); setStatus('Image saved as SVG.'); }
-  if (action === 'copyCaption') copyCaption();
-  if (action === 'downloadStory') { download('spectramuse-story.txt', state.story, 'text/plain'); setStatus('Story downloaded.'); }
-  if (action === 'storyboard') { state.mode = 'storyboard'; render(); setStatus('Storyboard mode selected.'); }
-  if (action === 'loadSample') { sampleIndex = (sampleIndex + 1) % samples.length; state.story = samples[sampleIndex]; render(); setStatus('Sample loaded.'); }
-  if (action === 'clearStory') { state.story = ''; render(); setStatus('Story cleared.'); }
+  if (action === 'play') playFeeling();
+  if (action === 'previewScene') playFeeling('Previewing scene.');
+  if (action === 'stop') { stopSound(); status.textContent = 'Sound stopped.'; }
+  if (action === 'sample') nextSample();
+  if (action === 'copy') copyStory();
+  if (action === 'save') saveStory();
+  if (action === 'saveMp4Story') status.textContent = 'MP4 story export is staged for the next engine build.';
+  if (action === 'saveMp4Scene') status.textContent = 'MP4 scene export is staged for the next engine build.';
+  if (action === 'saveImage') saveImage();
+  if (action === 'storyboard') { palette.value = 'dream'; status.textContent = 'Storyboard mood selected.'; renderMood(); }
+  if (action === 'clear') { text.value = ''; renderMood(); status.textContent = 'Cleared. Start a new line.'; }
 }
 
-document.addEventListener('input', (event) => {
-  const bind = event.target.dataset.bind;
-  if (bind === 'story') state.story = event.target.value;
-  if (bind === 'mode') state.mode = event.target.value;
-  if (bind === 'volume') state.volume = Number(event.target.value);
-  render();
+document.querySelectorAll('[data-action]').forEach((button) => {
+  button.addEventListener('click', () => handleAction(button.dataset.action));
 });
-document.addEventListener('click', (event) => {
-  const version = event.target.dataset.versionTarget;
-  const action = event.target.dataset.action;
-  if (version) setVersion(version);
-  if (action) handleAction(action);
+document.querySelectorAll('[data-version-target]').forEach((button) => {
+  button.addEventListener('click', () => setVersion(button.dataset.versionTarget));
 });
+text.addEventListener('input', renderMood);
+palette.addEventListener('change', renderMood);
+intensity.addEventListener('input', renderMood);
 
-initWaves();
-state.version = requestedVersion();
-render();
-setStatus(state.version === 'lite' ? 'Ready. Story videos will save as MP4.' : 'Ready. Studio mode is on.');
+function resize() {
+  canvas.width = innerWidth * devicePixelRatio;
+  canvas.height = innerHeight * devicePixelRatio;
+}
+addEventListener('resize', resize);
+resize();
+
+const particles = Array.from({ length: 120 }, () => ({
+  x: Math.random(),
+  y: Math.random(),
+  r: Math.random() * 1.8 + .4,
+  v: Math.random() * .0008 + .0002
+}));
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = 'rgba(248,239,226,.35)';
+  for (const p of particles) {
+    p.y -= p.v;
+    if (p.y < 0) p.y = 1;
+    ctx.beginPath();
+    ctx.arc(p.x * canvas.width, p.y * canvas.height, p.r * devicePixelRatio, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  requestAnimationFrame(draw);
+}
+
+setVersion(getRequestedVersion(), false);
+renderMood();
+draw();
 </script>
 </body>
 </html>
