@@ -26,26 +26,37 @@
 <style>
   :root {
     --ink: #f8efe2;
+    --muted: rgba(248,239,226,.68);
+    --line: rgba(255,255,255,.16);
+    --glass: rgba(9,8,11,.74);
     --accent: #ffcc7a;
     --hue: 32;
     --hue2: 210;
+    --intensity: .74;
   }
 
   * { box-sizing: border-box; }
 
+  html { background: #09080b; }
+
   body {
     margin: 0;
     min-height: 100vh;
-    overflow: hidden;
     font-family: "Courier New", Courier, monospace;
     color: var(--ink);
-    background: #09080b;
+    background:
+      radial-gradient(circle at 14% 12%, hsla(var(--hue),100%,70%,.22), transparent 34vw),
+      radial-gradient(circle at 86% 18%, hsla(var(--hue2),100%,68%,.18), transparent 32vw),
+      radial-gradient(circle at 68% 88%, rgba(255,122,183,.13), transparent 30vw),
+      #09080b;
+    overflow-x: hidden;
   }
 
   #stage {
     position: fixed;
     inset: 0;
     z-index: 0;
+    opacity: .85;
   }
 
   .grain {
@@ -67,21 +78,66 @@
     to { transform: translate(-12px, 9px); }
   }
 
-  .studio {
+  .shell {
     position: relative;
     z-index: 2;
-    width: min(1180px, calc(100vw - 28px));
-    height: min(94vh, 940px);
-    margin: 3.5vh auto;
-    padding: 22px;
-    border: 1px solid rgba(255,255,255,.18);
-    border-radius: 28px;
-    background: linear-gradient(145deg, rgba(9,8,11,.82), rgba(44,22,51,.45));
-    box-shadow: 0 24px 120px rgba(0,0,0,.62);
-    backdrop-filter: blur(14px);
+    width: min(1220px, calc(100vw - 28px));
+    min-height: calc(100vh - 32px);
+    margin: 16px auto;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 14px;
+  }
+
+  .topbar,
+  .studio,
+  .mobile-action-rail {
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    background: linear-gradient(145deg, rgba(9,8,11,.84), rgba(44,22,51,.42));
+    box-shadow: 0 24px 120px rgba(0,0,0,.52);
+    backdrop-filter: blur(14px);
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 18px;
+    padding: 16px 18px;
+  }
+
+  .brand h1 {
+    margin: 0;
+    font-size: clamp(34px, 5vw, 64px);
+    letter-spacing: -.06em;
+    line-height: .9;
+  }
+
+  .brand p {
+    margin: 8px 0 0;
+    max-width: 760px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .mode-pill {
+    flex: 0 0 auto;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 999px;
+    padding: 10px 12px;
+    color: rgba(248,239,226,.78);
+    background: rgba(255,255,255,.07);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .studio {
+    min-height: 690px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: minmax(330px, .95fr) minmax(360px, 1.05fr);
+    gap: 16px;
   }
 
   .panel {
@@ -93,57 +149,72 @@
   }
 
   .writer {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
   }
 
-  header {
-    padding: 18px 18px 10px;
+  .panel-head {
+    padding: 16px 18px 12px;
     border-bottom: 1px solid rgba(255,255,255,.13);
   }
 
-  h1 {
-    margin: 0;
-    font-size: clamp(28px, 4vw, 58px);
-    letter-spacing: -.05em;
-    line-height: .95;
+  .eyebrow {
+    margin: 0 0 8px;
+    color: var(--accent);
+    font-size: 12px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
   }
 
-  .tagline {
-    margin: 10px 0 0;
-    color: rgba(248,239,226,.72);
-    line-height: 1.35;
+  .panel-head h2 {
+    margin: 0;
+    font-size: 20px;
+    letter-spacing: -.03em;
   }
 
   textarea {
-    flex: 1;
     width: 100%;
-    min-height: 300px;
+    min-height: 340px;
     resize: none;
     border: 0;
     outline: none;
-    padding: 18px;
+    padding: 20px 18px;
     color: var(--ink);
     background: transparent;
-    font: 18px/1.5 "Courier New", Courier, monospace;
+    font: 18px/1.58 "Courier New", Courier, monospace;
+  }
+
+  .toolkit {
+    border-top: 1px solid rgba(255,255,255,.13);
+    padding: 14px;
+    display: grid;
+    gap: 12px;
   }
 
   .controls {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
-    padding: 14px 18px 18px;
-    border-top: 1px solid rgba(255,255,255,.13);
+  }
+
+  button,
+  select,
+  input[type="range"] {
+    font: 700 14px/1 "Courier New", Courier, monospace;
+  }
+
+  button,
+  .select-wrap {
+    min-height: 44px;
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: 999px;
   }
 
   button {
     cursor: pointer;
-    border: 1px solid rgba(255,255,255,.22);
-    border-radius: 999px;
-    padding: 11px 15px;
+    padding: 11px 13px;
     color: #09080b;
     background: var(--accent);
-    font: 700 14px/1 "Courier New", Courier, monospace;
   }
 
   button.secondary {
@@ -151,9 +222,64 @@
     background: rgba(255,255,255,.08);
   }
 
+  button.ghost {
+    color: rgba(248,239,226,.72);
+    background: rgba(0,0,0,.16);
+  }
+
+  button:active { transform: translateY(1px); }
+
+  .settings {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .field {
+    display: grid;
+    gap: 7px;
+    color: rgba(248,239,226,.68);
+    font-size: 12px;
+  }
+
+  .select-wrap {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    background: rgba(255,255,255,.06);
+  }
+
+  select {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    color: var(--ink);
+    background: transparent;
+  }
+
+  input[type="range"] {
+    accent-color: var(--accent);
+    width: 100%;
+  }
+
   .visualizer {
     position: relative;
     overflow: hidden;
+    min-height: 100%;
+  }
+
+  .visual-copy {
+    position: absolute;
+    left: 22px;
+    right: 22px;
+    top: 20px;
+    z-index: 3;
+  }
+
+  .visual-copy p {
+    margin: 0;
+    color: rgba(248,239,226,.68);
+    line-height: 1.45;
   }
 
   .orb {
@@ -162,14 +288,14 @@
     height: 34vmin;
     border-radius: 50%;
     left: 50%;
-    top: 50%;
+    top: 47%;
     transform: translate(-50%, -50%);
     background:
       radial-gradient(circle at 34% 32%, hsla(var(--hue), 100%, 76%, .96), transparent 28%),
       radial-gradient(circle at 64% 68%, hsla(var(--hue2), 100%, 72%, .82), transparent 34%),
       conic-gradient(from 90deg, hsla(var(--hue),100%,60%,.9), hsla(var(--hue2),100%,62%,.8), hsla(var(--hue),100%,60%,.9));
     filter: blur(.2px) saturate(1.25);
-    box-shadow: 0 0 90px hsla(var(--hue), 100%, 70%, .45);
+    box-shadow: 0 0 calc(100px * var(--intensity)) hsla(var(--hue), 100%, 70%, .45);
     animation: breathe 5s ease-in-out infinite;
   }
 
@@ -180,8 +306,8 @@
 
   .wave {
     position: absolute;
-    inset: auto 20px 28px;
-    height: 160px;
+    inset: auto 20px 30px;
+    height: 164px;
     display: flex;
     align-items: end;
     gap: 7px;
@@ -201,58 +327,221 @@
     to { transform: scaleY(1); opacity: .95; }
   }
 
-  .caption {
+  .status-card {
     position: absolute;
     left: 22px;
     right: 22px;
-    top: 20px;
-    color: rgba(248,239,226,.68);
-    line-height: 1.45;
+    bottom: 214px;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .readout {
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 18px;
+    padding: 12px;
+    background: rgba(0,0,0,.25);
+  }
+
+  .readout strong {
+    display: block;
+    font-size: 20px;
+    color: var(--accent);
+  }
+
+  .readout span {
+    display: block;
+    margin-top: 4px;
+    color: rgba(248,239,226,.62);
+    font-size: 12px;
   }
 
   .status {
     position: absolute;
     left: 22px;
-    bottom: 202px;
-    max-width: calc(100% - 44px);
+    right: 22px;
+    bottom: 178px;
+    z-index: 3;
     color: rgba(248,239,226,.72);
     font-size: 14px;
   }
 
-  @media (max-width: 780px) {
-    body { overflow: auto; }
-    .studio {
-      height: auto;
-      grid-template-columns: 1fr;
-      margin: 14px;
+  .mobile-action-rail { display: none; }
+
+  @media (max-width: 860px) {
+    body { padding-bottom: 118px; }
+
+    .shell {
+      width: min(100vw - 20px, 760px);
+      margin: 10px auto;
+      min-height: auto;
     }
-    .visualizer { min-height: 420px; }
+
+    .topbar {
+      align-items: flex-start;
+      border-radius: 22px;
+      padding: 14px;
+    }
+
+    .brand h1 { font-size: clamp(38px, 12vw, 58px); }
+    .brand p { font-size: 14px; }
+    .mode-pill { display: none; }
+
+    .studio {
+      min-height: auto;
+      border-radius: 22px;
+      padding: 10px;
+      grid-template-columns: 1fr;
+    }
+
+    .writer { grid-template-rows: auto auto auto; }
+    textarea { min-height: 260px; font-size: 16px; }
+
+    .controls {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .settings {
+      grid-template-columns: 1fr;
+    }
+
+    .visualizer {
+      min-height: 470px;
+    }
+
+    .orb {
+      width: 62vmin;
+      height: 62vmin;
+      top: 46%;
+    }
+
+    .status-card {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      left: 12px;
+      right: 12px;
+      bottom: 170px;
+      gap: 7px;
+    }
+
+    .readout { padding: 9px; }
+    .readout strong { font-size: 16px; }
+    .readout span { font-size: 10px; }
+
+    .status {
+      left: 14px;
+      right: 14px;
+      bottom: 138px;
+      font-size: 12px;
+    }
+
+    .wave {
+      inset: auto 12px 18px;
+      height: 108px;
+      gap: 5px;
+    }
+
+    .mobile-action-rail {
+      position: fixed;
+      z-index: 10;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+      border-radius: 22px;
+    }
+
+    .mobile-action-rail button {
+      min-height: 42px;
+      padding: 9px 8px;
+      font-size: 12px;
+    }
+  }
+
+  @media (max-width: 460px) {
+    .controls { grid-template-columns: 1fr; }
+    .mobile-action-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    body { padding-bottom: 166px; }
   }
 </style>
 </head>
 <body>
 <canvas id="stage"></canvas>
 <div class="grain"></div>
-<main class="studio">
-  <section class="panel writer">
-    <header>
+<main class="shell">
+  <section class="topbar" aria-label="SpectraMuse introduction">
+    <div class="brand">
       <h1>SpectraMuse</h1>
-      <p class="tagline">A synesthetic typewriter for living stories. Write a line. Watch it bloom into color, motion, and sound.</p>
-    </header>
-    <textarea id="story" spellcheck="true">The moon found a hidden door in the lake, and every ripple sang in blue.</textarea>
-    <div class="controls">
-      <button id="play">Play the feeling</button>
-      <button id="record" class="secondary">Record clip</button>
-      <button id="clear" class="secondary">Clear</button>
+      <p>A classic synesthetic typewriter for living stories. Write a line, tune the mood, then watch it bloom into color, motion, and sound.</p>
     </div>
+    <div class="mode-pill">Classic studio UI</div>
   </section>
-  <section class="panel visualizer" aria-label="Story visualizer">
-    <p class="caption">Words become atmosphere. Vowels warm the light. Consonants sharpen the texture. Emotion bends the wave.</p>
-    <div class="orb" id="orb"></div>
-    <p class="status" id="status">Ready.</p>
-    <div class="wave" id="wave"></div>
+
+  <section class="studio">
+    <section class="panel writer" aria-label="Story writer">
+      <div class="panel-head">
+        <p class="eyebrow">Story input</p>
+        <h2>Type the scene</h2>
+      </div>
+
+      <textarea id="story" spellcheck="true">The moon found a hidden door in the lake, and every ripple sang in blue.</textarea>
+
+      <div class="toolkit" aria-label="Story controls">
+        <div class="controls">
+          <button data-action="play">Play feeling</button>
+          <button class="secondary" data-action="stop">Stop sound</button>
+          <button class="secondary" data-action="sample">New sample</button>
+          <button class="secondary" data-action="copy">Copy story</button>
+          <button class="secondary" data-action="save">Save text</button>
+          <button class="ghost" data-action="clear">Clear</button>
+        </div>
+
+        <div class="settings" aria-label="Mood controls">
+          <label class="field">Mood palette
+            <span class="select-wrap">
+              <select id="palette">
+                <option value="classic">Classic glow</option>
+                <option value="dream">Dream lake</option>
+                <option value="storm">Storm page</option>
+                <option value="ember">Ember room</option>
+              </select>
+            </span>
+          </label>
+          <label class="field">Motion intensity
+            <input id="intensity" type="range" min="25" max="100" value="74" />
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel visualizer" aria-label="Story visualizer">
+      <div class="visual-copy">
+        <p class="eyebrow">Living preview</p>
+        <p>Vowels warm the light. Consonants sharpen the texture. Emotion bends the wave.</p>
+      </div>
+      <div class="orb" id="orb"></div>
+      <div class="status-card" aria-label="Mood signature">
+        <div class="readout"><strong id="hueReadout">0</strong><span>hue</span></div>
+        <div class="readout"><strong id="textureReadout">0</strong><span>texture</span></div>
+        <div class="readout"><strong id="intensityReadout">0%</strong><span>intensity</span></div>
+      </div>
+      <p class="status" id="status">Ready.</p>
+      <div class="wave" id="wave"></div>
+    </section>
   </section>
 </main>
+
+<nav class="mobile-action-rail" aria-label="Mobile quick actions">
+  <button data-action="play">Play</button>
+  <button class="secondary" data-action="sample">Sample</button>
+  <button class="secondary" data-action="copy">Copy</button>
+  <button class="ghost" data-action="clear">Clear</button>
+</nav>
+
 <script>
 const text = document.getElementById('story');
 const orb = document.getElementById('orb');
@@ -260,6 +549,28 @@ const wave = document.getElementById('wave');
 const status = document.getElementById('status');
 const canvas = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
+const palette = document.getElementById('palette');
+const intensity = document.getElementById('intensity');
+const hueReadout = document.getElementById('hueReadout');
+const textureReadout = document.getElementById('textureReadout');
+const intensityReadout = document.getElementById('intensityReadout');
+let audioContext;
+let currentOscillator;
+let sampleIndex = 0;
+
+const samples = [
+  'The moon found a hidden door in the lake, and every ripple sang in blue.',
+  'A velvet thunderstorm rolled across the library while the lamps learned to hum.',
+  'She folded sunlight into her pocket and walked home through a forest of bells.',
+  'The city breathed neon, soft rain, and tiny golden static after midnight.'
+];
+
+const palettes = {
+  classic: { hueShift: 18, hue2Shift: 190, accent: '#ffcc7a' },
+  dream: { hueShift: 206, hue2Shift: 282, accent: '#7ac7ff' },
+  storm: { hueShift: 254, hue2Shift: 38, accent: '#c5b7ff' },
+  ember: { hueShift: 8, hue2Shift: 158, accent: '#ff9a6b' }
+};
 
 for (let i = 0; i < 34; i++) {
   const bar = document.createElement('div');
@@ -281,39 +592,107 @@ function scoreWords(value) {
 
 function renderMood() {
   const s = scoreWords(text.value);
-  document.documentElement.style.setProperty('--hue', String((s.warmth + 18) % 360));
-  document.documentElement.style.setProperty('--hue2', String((s.consonants * 11 + 190) % 360));
-  orb.style.width = `${26 + s.density * 20}vmin`;
-  orb.style.height = `${26 + s.density * 20}vmin`;
+  const p = palettes[palette.value] || palettes.classic;
+  const motion = Number(intensity.value) / 100;
+  const hue = (s.warmth + p.hueShift) % 360;
+  const hue2 = (s.consonants * 11 + p.hue2Shift) % 360;
+
+  document.documentElement.style.setProperty('--hue', String(hue));
+  document.documentElement.style.setProperty('--hue2', String(hue2));
+  document.documentElement.style.setProperty('--accent', p.accent);
+  document.documentElement.style.setProperty('--intensity', String(motion));
+
+  const size = 26 + s.density * 20 + motion * 8;
+  orb.style.width = `${size}vmin`;
+  orb.style.height = `${size}vmin`;
+  orb.style.animationDuration = `${6.2 - motion * 2.6}s`;
+
   [...wave.children].forEach((bar, i) => {
-    const h = 18 + Math.abs(Math.sin((i + s.consonants) * .47)) * (70 + s.density * 110);
+    const h = 16 + Math.abs(Math.sin((i + s.consonants) * .47)) * (62 + s.density * 110) * motion;
     bar.style.height = `${h}px`;
   });
+
+  hueReadout.textContent = String(s.warmth);
+  textureReadout.textContent = String(s.consonants);
+  intensityReadout.textContent = `${Math.round(s.density * 100)}%`;
   status.textContent = `Mood signature: hue ${s.warmth}, texture ${s.consonants}, intensity ${Math.round(s.density * 100)}%.`;
 }
 
-text.addEventListener('input', renderMood);
-document.getElementById('clear').addEventListener('click', () => { text.value = ''; renderMood(); });
-document.getElementById('play').addEventListener('click', () => {
+function stopSound() {
+  if (currentOscillator) {
+    try { currentOscillator.stop(); } catch (error) {}
+    currentOscillator = null;
+  }
+}
+
+function playFeeling() {
   renderMood();
-  status.textContent = 'Playing a soft browser-generated tone map. Full sound engine coming soon.';
+  stopSound();
   const AudioContext = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContext) return;
-  const audio = new AudioContext();
-  const osc = audio.createOscillator();
-  const gain = audio.createGain();
+  if (!AudioContext) {
+    status.textContent = 'Audio is not supported in this browser.';
+    return;
+  }
+  audioContext = audioContext || new AudioContext();
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
   const s = scoreWords(text.value);
-  osc.frequency.value = 180 + s.warmth * 2.4;
-  gain.gain.setValueAtTime(.0001, audio.currentTime);
-  gain.gain.exponentialRampToValueAtTime(.09, audio.currentTime + .04);
-  gain.gain.exponentialRampToValueAtTime(.0001, audio.currentTime + .9);
-  osc.connect(gain).connect(audio.destination);
+  const motion = Number(intensity.value) / 100;
+  osc.type = palette.value === 'storm' ? 'sawtooth' : palette.value === 'dream' ? 'sine' : 'triangle';
+  osc.frequency.value = 180 + s.warmth * 2.4 + motion * 80;
+  gain.gain.setValueAtTime(.0001, audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.11 * motion, audioContext.currentTime + .04);
+  gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + 1.05);
+  osc.connect(gain).connect(audioContext.destination);
   osc.start();
-  osc.stop(audio.currentTime + 1);
+  osc.stop(audioContext.currentTime + 1.08);
+  currentOscillator = osc;
+  status.textContent = 'Playing a soft browser-generated tone map.';
+}
+
+async function copyStory() {
+  try {
+    await navigator.clipboard.writeText(text.value);
+    status.textContent = 'Story copied to clipboard.';
+  } catch (error) {
+    text.focus();
+    text.select();
+    status.textContent = 'Copy shortcut ready: press Command+C or Ctrl+C.';
+  }
+}
+
+function saveStory() {
+  const blob = new Blob([text.value], { type: 'text/plain' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'spectramuse-story.txt';
+  link.click();
+  URL.revokeObjectURL(link.href);
+  status.textContent = 'Story text downloaded.';
+}
+
+function nextSample() {
+  sampleIndex = (sampleIndex + 1) % samples.length;
+  text.value = samples[sampleIndex];
+  renderMood();
+}
+
+function handleAction(action) {
+  if (action === 'play') playFeeling();
+  if (action === 'stop') { stopSound(); status.textContent = 'Sound stopped.'; }
+  if (action === 'sample') nextSample();
+  if (action === 'copy') copyStory();
+  if (action === 'save') saveStory();
+  if (action === 'clear') { text.value = ''; renderMood(); status.textContent = 'Cleared. Start a new line.'; }
+}
+
+document.querySelectorAll('[data-action]').forEach((button) => {
+  button.addEventListener('click', () => handleAction(button.dataset.action));
 });
-document.getElementById('record').addEventListener('click', () => {
-  status.textContent = 'Recording/export will arrive in the next build.';
-});
+
+text.addEventListener('input', renderMood);
+palette.addEventListener('change', renderMood);
+intensity.addEventListener('input', renderMood);
 
 function resize() {
   canvas.width = innerWidth * devicePixelRatio;
