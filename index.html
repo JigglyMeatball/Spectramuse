@@ -26,11 +26,18 @@
 <style>
   :root {
     --ink: #f8efe2;
+    --panel-ink: #f8efe2;
     --muted: rgba(248,239,226,.68);
     --line: rgba(255,255,255,.16);
+    --panel: rgba(0,0,0,.26);
+    --panel-strong: rgba(0,0,0,.36);
     --accent: #ffcc7a;
     --hue: 32;
     --hue2: 210;
+    --motion-scale: 1;
+    --glow-strength: 1;
+    --particle-opacity: .35;
+    color-scheme: dark;
   }
 
   * { box-sizing: border-box; }
@@ -43,7 +50,24 @@
     overflow-x: hidden;
     font-family: "Courier New", Courier, monospace;
     color: var(--ink);
-    background: #09080b;
+    background:
+      radial-gradient(circle at 26% 20%, rgba(98,47,125,.34), transparent 36%),
+      radial-gradient(circle at 78% 70%, rgba(31,76,115,.25), transparent 35%),
+      linear-gradient(145deg, #050407 0%, #100a18 45%, #07070b 100%);
+  }
+
+  body[data-preset="inverted"] {
+    --ink: #151018;
+    --panel-ink: #151018;
+    --muted: rgba(21,16,24,.7);
+    --line: rgba(21,16,24,.18);
+    --panel: rgba(255,255,255,.42);
+    --panel-strong: rgba(255,255,255,.58);
+    color-scheme: light;
+    background:
+      radial-gradient(circle at 24% 24%, rgba(255,198,232,.46), transparent 34%),
+      radial-gradient(circle at 76% 72%, rgba(130,190,255,.34), transparent 34%),
+      linear-gradient(145deg, #fbf7ff 0%, #efe7ff 52%, #fff8f0 100%);
   }
 
   #stage {
@@ -56,13 +80,13 @@
     position: fixed;
     inset: 0;
     pointer-events: none;
-    opacity: .22;
+    opacity: .2;
     mix-blend-mode: overlay;
     background-image:
-      radial-gradient(circle at 20% 30%, rgba(255,255,255,.13) 0 1px, transparent 1px),
-      radial-gradient(circle at 70% 60%, rgba(0,0,0,.2) 0 1px, transparent 1px);
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,.14) 0 1px, transparent 1px),
+      radial-gradient(circle at 70% 60%, rgba(0,0,0,.22) 0 1px, transparent 1px);
     background-size: 5px 5px, 7px 7px;
-    animation: crawl 1.5s steps(4) infinite;
+    animation: crawl calc(1.5s / max(var(--motion-scale), .45)) steps(4) infinite;
     z-index: 1;
   }
 
@@ -71,7 +95,7 @@
     to { transform: translate(-12px, 9px); }
   }
 
-  .studio {
+  .app-shell {
     position: relative;
     z-index: 2;
     width: min(1180px, calc(100vw - 28px));
@@ -80,19 +104,29 @@
     padding: 16px;
     border: 1px solid rgba(255,255,255,.18);
     border-radius: 28px;
-    background: linear-gradient(145deg, rgba(9,8,11,.82), rgba(44,22,51,.45));
+    background: linear-gradient(145deg, rgba(9,8,11,.84), rgba(44,22,51,.42));
     box-shadow: 0 24px 120px rgba(0,0,0,.62);
-    backdrop-filter: blur(14px);
+    backdrop-filter: blur(16px);
     display: grid;
-    grid-template-columns: minmax(320px, .95fr) minmax(320px, 1.05fr);
+    grid-template-columns: minmax(330px, .98fr) minmax(320px, 1.02fr);
     gap: 14px;
+  }
+
+  body[data-preset="inverted"] .app-shell {
+    background: linear-gradient(145deg, rgba(255,255,255,.74), rgba(240,231,255,.48));
+    box-shadow: 0 24px 100px rgba(72,52,103,.2);
+  }
+
+  body[data-mode="lite"] .app-shell {
+    width: min(890px, calc(100vw - 24px));
+    grid-template-columns: 1fr;
   }
 
   .panel {
     min-height: 0;
-    border: 1px solid rgba(255,255,255,.15);
+    border: 1px solid var(--line);
     border-radius: 22px;
-    background: rgba(0,0,0,.24);
+    background: var(--panel);
     overflow: hidden;
   }
 
@@ -103,19 +137,20 @@
 
   header {
     padding: 16px 18px 10px;
-    border-bottom: 1px solid rgba(255,255,255,.13);
+    border-bottom: 1px solid var(--line);
   }
 
   h1 {
     margin: 0;
-    font-size: clamp(32px, 5vw, 62px);
-    letter-spacing: -.06em;
-    line-height: .92;
+    font-size: clamp(32px, 4.4vw, 56px);
+    letter-spacing: 0;
+    line-height: .96;
+    overflow-wrap: anywhere;
   }
 
   .tagline {
     margin: 10px 0 0;
-    color: rgba(248,239,226,.72);
+    color: var(--muted);
     line-height: 1.35;
   }
 
@@ -125,7 +160,7 @@
     gap: 8px;
     margin-top: 12px;
     padding: 6px;
-    border: 1px solid rgba(255,255,255,.14);
+    border: 1px solid var(--line);
     border-radius: 999px;
     background: rgba(255,255,255,.05);
   }
@@ -133,50 +168,163 @@
   .mode-switch button {
     min-height: 38px;
     padding: 8px 10px;
-    color: var(--ink);
+    color: var(--panel-ink);
     background: transparent;
   }
 
-  body[data-version="lite"] #liteToggle,
-  body[data-version="studio"] #studioToggle {
+  body[data-mode="lite"] #liteToggle,
+  body[data-mode="studio"] #studioToggle {
     color: #09080b;
     background: var(--accent);
   }
 
+  .sensory-panel {
+    display: grid;
+    gap: 12px;
+    padding: 14px 18px 16px;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 24px;
+  }
+
+  .legend i {
+    width: 28px;
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), hsl(var(--hue2) 100% 72%));
+    box-shadow: 0 0 12px var(--accent);
+  }
+
+  .legend .sound-mark {
+    height: 18px;
+    width: 34px;
+    background:
+      linear-gradient(90deg, transparent 0 10%, var(--accent) 10% 18%, transparent 18% 30%, hsl(var(--hue2) 100% 72%) 30% 38%, transparent 38% 52%, var(--accent) 52% 60%, transparent 60%);
+    box-shadow: none;
+  }
+
+  .text-shell {
+    position: relative;
+    min-height: 360px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 18px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.035), transparent 24%),
+      rgba(0,0,0,.18);
+    overflow: hidden;
+  }
+
+  body[data-mode="lite"] .text-shell { min-height: 420px; }
+  body[data-preset="inverted"] .text-shell { background: rgba(255,255,255,.28); }
+
+  .letter-layer,
   textarea {
-    flex: 1;
+    position: absolute;
+    inset: 0;
     width: 100%;
-    min-height: 260px;
-    resize: vertical;
+    height: 100%;
+    margin: 0;
+    padding: 18px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font: 18px/1.55 "Courier New", Courier, monospace;
+  }
+
+  .letter-layer {
+    z-index: 1;
+    color: rgba(248,239,226,.46);
+    pointer-events: none;
+  }
+
+  textarea {
+    z-index: 2;
+    resize: none;
     border: 0;
     outline: none;
-    padding: 18px;
-    color: var(--ink);
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    caret-color: var(--ink);
     background: transparent;
-    font: 18px/1.5 "Courier New", Courier, monospace;
+  }
+
+  textarea::selection {
+    color: transparent;
+    background: rgba(255,255,255,.18);
+  }
+
+  .letter {
+    color: var(--letter-color);
+    text-shadow:
+      0 0 calc(5px * var(--glow-strength) * var(--letter-glow)) currentColor,
+      0 0 calc(14px * var(--glow-strength) * var(--letter-glow)) color-mix(in srgb, currentColor 72%, transparent);
+    transition: color 180ms ease, text-shadow 180ms ease;
+  }
+
+  .letter.active-word {
+    text-decoration-line: underline;
+    text-decoration-color: currentColor;
+    text-decoration-thickness: 2px;
+    text-underline-offset: .2em;
+  }
+
+  body[data-preset="colorBlind"] .letter {
+    text-decoration-line: underline;
+    text-decoration-style: var(--underline-style);
+    text-decoration-color: currentColor;
+    text-decoration-thickness: 1px;
+    text-underline-offset: .24em;
+  }
+
+  .empty-hint {
+    color: var(--muted);
+  }
+
+  .sensory-footer {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
   }
 
   .controls,
   .settings {
     display: grid;
     gap: 9px;
-    padding: 12px 18px 0;
+    padding: 0 18px 14px;
   }
 
   .controls {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .settings {
-    grid-template-columns: 1fr 1fr;
-    padding-bottom: 16px;
-    border-top: 1px solid rgba(255,255,255,.13);
+  .lite-settings {
+    grid-template-columns: 1fr;
+    padding-top: 0;
+  }
+
+  .studio-settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
   }
 
   .field {
     display: grid;
     gap: 7px;
-    color: rgba(248,239,226,.68);
+    color: var(--muted);
     font-size: 12px;
   }
 
@@ -201,12 +349,12 @@
   }
 
   button.secondary {
-    color: var(--ink);
+    color: var(--panel-ink);
     background: rgba(255,255,255,.08);
   }
 
   button.ghost {
-    color: rgba(248,239,226,.74);
+    color: var(--muted);
     background: rgba(0,0,0,.16);
   }
 
@@ -216,6 +364,7 @@
   }
 
   button:active { transform: translateY(1px); }
+  button:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   .select-wrap {
     display: flex;
@@ -228,8 +377,13 @@
     width: 100%;
     border: 0;
     outline: 0;
-    color: var(--ink);
+    color: var(--panel-ink);
     background: transparent;
+  }
+
+  option {
+    color: #151018;
+    background: #f8efe2;
   }
 
   input[type="range"] {
@@ -243,6 +397,8 @@
     min-height: 620px;
   }
 
+  body[data-mode="lite"] .visualizer { min-height: 260px; }
+
   .visual-copy {
     position: absolute;
     left: 18px;
@@ -253,7 +409,7 @@
 
   .visual-copy p {
     margin: 0;
-    color: rgba(248,239,226,.68);
+    color: var(--muted);
     line-height: 1.45;
   }
 
@@ -271,15 +427,21 @@
     height: 34vmin;
     border-radius: 50%;
     left: 50%;
-    top: 46%;
+    top: 45%;
     transform: translate(-50%, -50%);
     background:
       radial-gradient(circle at 34% 32%, hsla(var(--hue), 100%, 76%, .96), transparent 28%),
       radial-gradient(circle at 64% 68%, hsla(var(--hue2), 100%, 72%, .82), transparent 34%),
       conic-gradient(from 90deg, hsla(var(--hue),100%,60%,.9), hsla(var(--hue2),100%,62%,.8), hsla(var(--hue),100%,60%,.9));
     filter: blur(.2px) saturate(1.25);
-    box-shadow: 0 0 90px hsla(var(--hue), 100%, 70%, .45);
-    animation: breathe 5s ease-in-out infinite;
+    box-shadow: 0 0 calc(90px * var(--glow-strength)) hsla(var(--hue), 100%, 70%, .45);
+    animation: breathe calc(5s / max(var(--motion-scale), .45)) ease-in-out infinite;
+  }
+
+  body[data-mode="lite"] .orb {
+    width: 42vmin;
+    height: 42vmin;
+    opacity: .86;
   }
 
   @keyframes breathe {
@@ -296,13 +458,18 @@
     gap: 7px;
   }
 
+  body[data-mode="lite"] .wave {
+    height: 92px;
+    inset: auto 18px 22px;
+  }
+
   .bar {
     flex: 1;
     min-width: 4px;
     border-radius: 999px;
     background: linear-gradient(to top, hsla(var(--hue2),100%,70%,.35), hsla(var(--hue),100%,76%,.9));
     transform-origin: bottom;
-    animation: pulse 900ms ease-in-out infinite alternate;
+    animation: pulse calc(900ms / max(var(--motion-scale), .45)) ease-in-out infinite alternate;
   }
 
   @keyframes pulse {
@@ -322,10 +489,10 @@
   }
 
   .readout {
-    border: 1px solid rgba(255,255,255,.14);
+    border: 1px solid var(--line);
     border-radius: 16px;
     padding: 10px;
-    background: rgba(0,0,0,.25);
+    background: var(--panel-strong);
   }
 
   .readout strong {
@@ -337,7 +504,7 @@
   .readout span {
     display: block;
     margin-top: 4px;
-    color: rgba(248,239,226,.62);
+    color: var(--muted);
     font-size: 11px;
   }
 
@@ -347,15 +514,17 @@
     right: 18px;
     bottom: 152px;
     z-index: 3;
-    color: rgba(248,239,226,.72);
+    color: var(--muted);
     font-size: 13px;
   }
 
-  body[data-version="lite"] .studio-only { display: none !important; }
-  body[data-version="studio"] .lite-only { display: none !important; }
+  body[data-mode="lite"] .studio-only { display: none !important; }
+  body[data-mode="studio"] .lite-only { display: none !important; }
+  body[data-mode="lite"] .status-card,
+  body[data-mode="lite"] .visual-copy { display: none; }
 
   @media (max-width: 820px) {
-    .studio {
+    .app-shell {
       width: calc(100vw - 20px);
       min-height: auto;
       margin: 10px auto;
@@ -364,43 +533,60 @@
       grid-template-columns: 1fr;
     }
 
-    h1 { font-size: clamp(42px, 13vw, 62px); }
+    h1 { font-size: clamp(34px, 10vw, 44px); }
     .tagline { font-size: 14px; }
-    textarea { min-height: 245px; font-size: 16px; }
-    .settings { grid-template-columns: 1fr; }
-    .visualizer { min-height: 430px; }
-    .orb { width: 62vmin; height: 62vmin; }
-    .wave { height: 100px; inset: auto 12px 18px; gap: 5px; }
-    .status-card { left: 12px; right: 12px; bottom: 154px; gap: 7px; }
+    .text-shell, body[data-mode="lite"] .text-shell { min-height: 340px; }
+    .letter-layer, textarea { font-size: 16px; padding: 16px; }
+    .studio-settings { grid-template-columns: 1fr; }
+    .visualizer, body[data-mode="lite"] .visualizer { min-height: 260px; }
+    .orb { width: 58vmin; height: 58vmin; }
+    .wave { height: 88px; inset: auto 12px 18px; gap: 5px; }
+    .status-card { left: 12px; right: 12px; bottom: 126px; gap: 7px; }
     .readout { padding: 8px; }
     .readout strong { font-size: 15px; }
     .readout span { font-size: 10px; }
-    .status { left: 12px; right: 12px; bottom: 124px; font-size: 12px; }
+    .status { left: 12px; right: 12px; bottom: 104px; font-size: 12px; }
   }
 
   @media (max-width: 470px) {
+    h1 { font-size: clamp(32px, 9.6vw, 40px); }
     .controls { grid-template-columns: 1fr; }
+    .sensory-panel, header, .controls, .settings { padding-left: 14px; padding-right: 14px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grain, .orb, .bar { animation-duration: 8s; }
   }
 </style>
 </head>
-<body data-version="lite">
-<canvas id="stage"></canvas>
-<div class="grain"></div>
-<main class="studio">
+<body data-mode="lite" data-preset="normal">
+<canvas id="stage" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<main class="app-shell">
   <section class="panel writer">
     <header>
       <h1>SpectraMuse</h1>
-      <p class="tagline">A synesthetic typewriter for living stories. Write a line. Watch it bloom into color, motion, and sound.</p>
+      <p class="tagline">Type a word. Each letter becomes color, tone, and motion.</p>
       <div class="mode-switch" aria-label="Choose Lite or Studio">
-        <button id="liteToggle" type="button" data-version-target="lite">Lite</button>
-        <button id="studioToggle" type="button" data-version-target="studio">Studio</button>
+        <button id="liteToggle" type="button" data-mode-target="lite">Lite</button>
+        <button id="studioToggle" type="button" data-mode-target="studio">Studio</button>
       </div>
     </header>
 
-    <textarea id="story" spellcheck="true">The moon found a hidden door in the lake, and every ripple sang in blue.</textarea>
+    <div class="sensory-panel">
+      <div class="legend" aria-label="Sensory legend">
+        <span><i aria-hidden="true"></i>Color</span>
+        <span><i class="sound-mark" aria-hidden="true"></i>Sound</span>
+      </div>
+      <div class="text-shell">
+        <div id="letterLayer" class="letter-layer" aria-hidden="true"></div>
+        <textarea id="story" spellcheck="true" aria-label="Type words to generate color, sound, and motion">moon</textarea>
+      </div>
+      <p class="sensory-footer">Each letter has a color. Each color has a sound.</p>
+    </div>
 
     <div class="controls">
-      <button data-action="play">Play feeling</button>
+      <button data-action="play">Play phrase</button>
       <button class="secondary studio-only" data-action="stop">Stop sound</button>
       <button class="secondary" data-action="sample">New sample</button>
       <button class="secondary lite-only" data-action="copy">Copy story</button>
@@ -414,14 +600,32 @@
       <button class="ghost" data-action="clear">Clear</button>
     </div>
 
-    <div class="settings">
-      <label class="field">Mood palette
+    <div class="settings lite-settings">
+      <label class="field">Preset
         <span class="select-wrap">
-          <select id="palette">
-            <option value="classic">Classic glow</option>
-            <option value="dream">Dream lake</option>
-            <option value="storm">Storm page</option>
-            <option value="ember">Ember room</option>
+          <select id="presetLite"></select>
+        </span>
+      </label>
+    </div>
+
+    <div class="settings studio-settings studio-only">
+      <label class="field">Preset
+        <span class="select-wrap">
+          <select id="presetStudio"></select>
+        </span>
+      </label>
+      <label class="field">Style
+        <span class="select-wrap">
+          <select id="palette"></select>
+        </span>
+      </label>
+      <label class="field">Animation
+        <span class="select-wrap">
+          <select id="animationStyle">
+            <option value="wave">Wave focus</option>
+            <option value="orb">Orb bloom</option>
+            <option value="rain">Soft rain</option>
+            <option value="pulse">Quiet pulse</option>
           </select>
         </span>
       </label>
@@ -434,235 +638,539 @@
   <section class="panel visualizer" aria-label="Story visualizer">
     <div class="visual-copy">
       <p class="eyebrow">Living preview</p>
-      <p>Vowels warm the light. Consonants sharpen the texture. Emotion bends the wave.</p>
+      <p>Letter tones feed the wave. Word motifs move the orb. Presets shape the same sensory engine.</p>
     </div>
-    <div class="orb" id="orb"></div>
+    <div class="orb" id="orb" aria-hidden="true"></div>
     <div class="status-card" aria-label="Mood signature">
       <div class="readout"><strong id="hueReadout">0</strong><span>hue</span></div>
       <div class="readout"><strong id="textureReadout">0</strong><span>texture</span></div>
       <div class="readout"><strong id="intensityReadout">0%</strong><span>intensity</span></div>
     </div>
     <p class="status" id="status">Ready.</p>
-    <div class="wave" id="wave"></div>
+    <div class="wave" id="wave" aria-hidden="true"></div>
   </section>
 </main>
-<script>
-const text = document.getElementById('story');
-const orb = document.getElementById('orb');
-const wave = document.getElementById('wave');
-const status = document.getElementById('status');
-const canvas = document.getElementById('stage');
-const ctx = canvas.getContext('2d');
-const palette = document.getElementById('palette');
-const intensity = document.getElementById('intensity');
-const hueReadout = document.getElementById('hueReadout');
-const textureReadout = document.getElementById('textureReadout');
-const intensityReadout = document.getElementById('intensityReadout');
-let audioContext;
-let currentOscillator;
+<script type="module">
+import {
+  LITE_PRESETS,
+  STUDIO_PRESETS,
+  PRESENTATION_PRESETS,
+  STORY_PALETTES,
+  createSensoryAudio,
+  getLetterProfile,
+  getPalette,
+  getPreset,
+  getWordMotif,
+  scoreStory
+} from "./js/sensory-engine.js";
+
+const MODE_KEY = "spectramuse-mode";
+const LEGACY_MODE_KEY = "spectramuse-version";
+const PRESET_KEY = "spectramuse-preset";
+const PALETTE_KEY = "spectramuse-palette";
+const ANIMATION_KEY = "spectramuse-animation";
+const INTENSITY_KEY = "spectramuse-intensity";
+
+const storyInput = document.getElementById("story");
+const letterLayer = document.getElementById("letterLayer");
+const orb = document.getElementById("orb");
+const wave = document.getElementById("wave");
+const status = document.getElementById("status");
+const canvas = document.getElementById("stage");
+const ctx = canvas.getContext("2d");
+const presetLite = document.getElementById("presetLite");
+const presetStudio = document.getElementById("presetStudio");
+const paletteSelect = document.getElementById("palette");
+const animationStyle = document.getElementById("animationStyle");
+const intensity = document.getElementById("intensity");
+const hueReadout = document.getElementById("hueReadout");
+const textureReadout = document.getElementById("textureReadout");
+const intensityReadout = document.getElementById("intensityReadout");
+const audio = createSensoryAudio();
+
+let lastValue = storyInput.value;
 let sampleIndex = 0;
+let particles = [];
+const bursts = [];
 
 const samples = [
-  'The moon found a hidden door in the lake, and every ripple sang in blue.',
-  'A velvet thunderstorm rolled across the library while the lamps learned to hum.',
-  'She folded sunlight into her pocket and walked home through a forest of bells.',
-  'The city breathed neon, soft rain, and tiny golden static after midnight.'
+  "moon",
+  "Luna writes blue thunder in a quiet room.",
+  "A velvet storm hums softly under the library floor.",
+  "Mira folded sunlight into her pocket and every step rang gold.",
+  "The city breathed neon rain after midnight."
 ];
 
-const palettes = {
-  classic: { hueShift: 18, hue2Shift: 190, accent: '#ffcc7a', type: 'triangle', base: 180 },
-  dream: { hueShift: 206, hue2Shift: 282, accent: '#7ac7ff', type: 'sine', base: 210 },
-  storm: { hueShift: 254, hue2Shift: 38, accent: '#c5b7ff', type: 'sawtooth', base: 145 },
-  ember: { hueShift: 8, hue2Shift: 158, accent: '#ff9a6b', type: 'triangle', base: 168 }
+const state = {
+  mode: getInitialMode(),
+  preset: readStorage(PRESET_KEY, "normal"),
+  palette: readStorage(PALETTE_KEY, "classic"),
+  animation: readStorage(ANIMATION_KEY, "wave"),
+  intensity: Number(readStorage(INTENSITY_KEY, "74"))
 };
 
-for (let i = 0; i < 34; i++) {
-  const bar = document.createElement('div');
-  bar.className = 'bar';
+for (let i = 0; i < 34; i += 1) {
+  const bar = document.createElement("div");
+  bar.className = "bar";
   bar.style.height = `${20 + Math.random() * 130}px`;
   bar.style.animationDelay = `${Math.random() * 900}ms`;
   bar.style.animationDuration = `${620 + Math.random() * 900}ms`;
   wave.appendChild(bar);
 }
 
-function getRequestedVersion() {
-  const params = new URLSearchParams(location.search);
-  const urlMode = params.get('mode');
-  if (urlMode === 'studio' || urlMode === 'lite') return urlMode;
-  return localStorage.getItem('spectramuse-version') || 'lite';
-}
-
-function setVersion(version, save = true) {
-  const chosen = version === 'studio' ? 'studio' : 'lite';
-  document.body.dataset.version = chosen;
-  document.getElementById('liteToggle').setAttribute('aria-pressed', String(chosen === 'lite'));
-  document.getElementById('studioToggle').setAttribute('aria-pressed', String(chosen === 'studio'));
-  if (save) localStorage.setItem('spectramuse-version', chosen);
-  status.textContent = chosen === 'lite' ? 'Lite mode is on. Full tones and animation are active.' : 'Studio mode is on. Full controls unlocked.';
-  renderMood();
-}
-
-function scoreWords(value) {
-  const letters = value.toLowerCase().replace(/[^a-z]/g, '');
-  const vowels = (letters.match(/[aeiou]/g) || []).length;
-  const consonants = Math.max(letters.length - vowels, 1);
-  const warmth = Math.round((vowels / Math.max(letters.length, 1)) * 360);
-  const density = Math.min(1, value.length / 280);
-  return { warmth, density, consonants };
-}
-
-function renderMood() {
-  const s = scoreWords(text.value);
-  const p = palettes[palette.value] || palettes.classic;
-  const motion = Number(intensity.value) / 100;
-  const hue = (s.warmth + p.hueShift) % 360;
-  const hue2 = (s.consonants * 11 + p.hue2Shift) % 360;
-
-  document.documentElement.style.setProperty('--hue', String(hue));
-  document.documentElement.style.setProperty('--hue2', String(hue2));
-  document.documentElement.style.setProperty('--accent', p.accent);
-
-  const size = 26 + s.density * 20 + motion * 8;
-  orb.style.width = `${size}vmin`;
-  orb.style.height = `${size}vmin`;
-  orb.style.animationDuration = `${6.2 - motion * 2.6}s`;
-
-  [...wave.children].forEach((bar, i) => {
-    const h = 16 + Math.abs(Math.sin((i + s.consonants) * .47)) * (62 + s.density * 110) * motion;
-    bar.style.height = `${h}px`;
-  });
-
-  hueReadout.textContent = String(s.warmth);
-  textureReadout.textContent = String(s.consonants);
-  intensityReadout.textContent = `${Math.round(s.density * 100)}%`;
-}
-
-function stopSound() {
-  if (currentOscillator) {
-    try { currentOscillator.stop(); } catch (error) {}
-    currentOscillator = null;
+function readStorage(key, fallback) {
+  try {
+    return localStorage.getItem(key) || fallback;
+  } catch {
+    return fallback;
   }
 }
 
-function playFeeling(label = 'Playing a soft browser-generated tone map.') {
-  renderMood();
-  stopSound();
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContext) {
-    status.textContent = 'Audio is not supported in this browser.';
+function writeStorage(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
+
+function getInitialMode() {
+  const params = new URLSearchParams(location.search);
+  const urlMode = params.get("mode");
+  if (urlMode === "studio" || urlMode === "lite") return urlMode;
+  const saved = readStorage(MODE_KEY, "") || readStorage(LEGACY_MODE_KEY, "");
+  if (saved === "studio" || saved === "lite") return saved;
+  return matchMedia("(max-width: 820px)").matches ? "lite" : "studio";
+}
+
+function allowedPresets() {
+  return state.mode === "studio" ? STUDIO_PRESETS : LITE_PRESETS;
+}
+
+function normalizePresetForMode() {
+  if (!allowedPresets().includes(state.preset)) {
+    state.preset = "normal";
+    writeStorage(PRESET_KEY, state.preset);
+  }
+}
+
+function populatePresetSelect(select, values) {
+  select.replaceChildren(...values.map(value => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = PRESENTATION_PRESETS[value].label;
+    return option;
+  }));
+  select.value = state.preset;
+}
+
+function populatePaletteSelect() {
+  paletteSelect.replaceChildren(...Object.entries(STORY_PALETTES).map(([value, palette]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = palette.label;
+    return option;
+  }));
+  paletteSelect.value = state.palette;
+}
+
+function setMode(mode, options = {}) {
+  state.mode = mode === "studio" ? "studio" : "lite";
+  normalizePresetForMode();
+  document.body.dataset.mode = state.mode;
+  document.body.dataset.version = state.mode;
+  document.getElementById("liteToggle").setAttribute("aria-pressed", String(state.mode === "lite"));
+  document.getElementById("studioToggle").setAttribute("aria-pressed", String(state.mode === "studio"));
+  populatePresetSelect(presetLite, LITE_PRESETS);
+  populatePresetSelect(presetStudio, STUDIO_PRESETS);
+  if (options.persist !== false) {
+    writeStorage(MODE_KEY, state.mode);
+    writeStorage(LEGACY_MODE_KEY, state.mode);
+  }
+  renderAll(state.mode === "lite" ? "Lite mode keeps the generator simple." : "Studio mode unlocks the full control panel.");
+}
+
+function setPreset(preset, options = {}) {
+  state.preset = PRESENTATION_PRESETS[preset] ? preset : "normal";
+  normalizePresetForMode();
+  document.body.dataset.preset = state.preset;
+  presetLite.value = state.preset;
+  presetStudio.value = state.preset;
+  if (options.persist !== false) writeStorage(PRESET_KEY, state.preset);
+  renderAll(`${getPreset(state.preset).label} preset active.`);
+}
+
+function escapeLetterClass(profile) {
+  return `letter-${profile.category}`;
+}
+
+function getActiveWordBounds(value) {
+  const caret = storyInput.selectionStart ?? value.length;
+  let start = caret;
+  let end = caret;
+  while (start > 0 && /[a-zA-Z]/.test(value[start - 1])) start -= 1;
+  while (end < value.length && /[a-zA-Z]/.test(value[end])) end += 1;
+  return { start, end };
+}
+
+function renderLetters() {
+  const value = storyInput.value;
+  const bounds = getActiveWordBounds(value);
+  const fragment = document.createDocumentFragment();
+
+  if (!value) {
+    const hint = document.createElement("span");
+    hint.className = "empty-hint";
+    hint.textContent = "Type a word or name...";
+    fragment.appendChild(hint);
+    letterLayer.replaceChildren(fragment);
     return;
   }
-  audioContext = audioContext || new AudioContext();
-  const osc = audioContext.createOscillator();
-  const gain = audioContext.createGain();
-  const s = scoreWords(text.value);
-  const p = palettes[palette.value] || palettes.classic;
-  const motion = Number(intensity.value) / 100;
-  osc.type = p.type;
-  osc.frequency.value = p.base + s.warmth * 1.8 + motion * 80;
-  gain.gain.setValueAtTime(.0001, audioContext.currentTime);
-  gain.gain.exponentialRampToValueAtTime(.11 * motion, audioContext.currentTime + .04);
-  gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + 1.05);
-  osc.connect(gain).connect(audioContext.destination);
-  osc.start();
-  osc.stop(audioContext.currentTime + 1.08);
-  currentOscillator = osc;
-  status.textContent = label;
+
+  [...value].forEach((char, index) => {
+    const span = document.createElement("span");
+    span.textContent = char;
+    if (/[a-zA-Z]/.test(char)) {
+      const profile = getLetterProfile(char, { presetId: state.preset, paletteId: state.palette, position: index });
+      span.className = `letter ${escapeLetterClass(profile)}${index >= bounds.start && index < bounds.end ? " active-word" : ""}`;
+      span.style.setProperty("--letter-color", profile.color);
+      span.style.setProperty("--letter-glow", String(profile.glow));
+      span.style.setProperty("--underline-style", profile.underlineStyle);
+      span.dataset.tone = String(profile.tone.frequency);
+    }
+    fragment.appendChild(span);
+  });
+
+  letterLayer.replaceChildren(fragment);
+  letterLayer.scrollTop = storyInput.scrollTop;
+}
+
+function getCompletedWord(value, caret) {
+  const left = value.slice(0, caret).replace(/[^a-zA-Z]+$/g, "");
+  return left.match(/[a-zA-Z]+$/)?.[0] || "";
+}
+
+function updateCssFromState() {
+  const preset = getPreset(state.preset);
+  const palette = getPalette(state.palette);
+  const motion = (Number(state.intensity) / 100) * preset.motion;
+  document.body.dataset.preset = state.preset;
+  document.documentElement.style.setProperty("--accent", palette.accent);
+  document.documentElement.style.setProperty("--motion-scale", String(clamp(motion, .25, 1.85)));
+  document.documentElement.style.setProperty("--glow-strength", String(preset.glow));
+  document.documentElement.style.setProperty("--particle-opacity", String(.18 + preset.particles * .18));
+}
+
+function renderMood(message) {
+  const score = scoreStory(storyInput.value);
+  const palette = getPalette(state.palette);
+  const preset = getPreset(state.preset);
+  const motion = Number(state.intensity) / 100;
+  const hue = Math.round((score.warmth + palette.hueShift + (preset.hueOffset || 0)) % 360);
+  const hue2 = Math.round((score.consonants * 11 + palette.hue2Shift) % 360);
+  const size = state.mode === "lite" ? 30 + score.density * 14 + motion * 8 : 27 + score.density * 20 + motion * 9;
+
+  document.documentElement.style.setProperty("--hue", String(hue));
+  document.documentElement.style.setProperty("--hue2", String(hue2));
+  orb.style.width = `${size}vmin`;
+  orb.style.height = `${size}vmin`;
+
+  [...wave.children].forEach((bar, index) => {
+    const h = 16 + Math.abs(Math.sin((index + score.consonants) * .47)) * (54 + score.density * 112) * motion * preset.motion;
+    bar.style.height = `${h}px`;
+    if (state.animation === "rain") bar.style.animationDelay = `${index * 26}ms`;
+    if (state.animation === "pulse") bar.style.animationDuration = `${1200 - motion * 420}ms`;
+  });
+
+  hueReadout.textContent = String(score.warmth);
+  textureReadout.textContent = String(score.consonants);
+  intensityReadout.textContent = `${Math.round(score.density * 100)}%`;
+  if (message) status.textContent = message;
+}
+
+function renderAll(message) {
+  updateCssFromState();
+  renderLetters();
+  renderMood(message);
+  reconcileParticles();
+}
+
+function triggerLetterVisual(letter, position = 0) {
+  const profile = getLetterProfile(letter, { presetId: state.preset, paletteId: state.palette, position });
+  document.documentElement.style.setProperty("--hue", String(Math.round(profile.hue)));
+  document.documentElement.style.setProperty("--hue2", String(Math.round((profile.hue + 178) % 360)));
+
+  const bar = wave.children[profile.index % wave.children.length];
+  if (bar?.animate) {
+    bar.animate([
+      { transform: "scaleY(.22)", opacity: .55 },
+      { transform: "scaleY(1.15)", opacity: 1 },
+      { transform: "scaleY(.45)", opacity: .72 }
+    ], { duration: 360 / getPreset(state.preset).motion, easing: "ease-out" });
+  }
+
+  if (orb.animate) {
+    orb.animate([
+      { transform: "translate(-50%, -50%) scale(.92)" },
+      { transform: "translate(-50%, -50%) scale(1.18)" },
+      { transform: "translate(-50%, -50%) scale(.98)" }
+    ], { duration: 420 / getPreset(state.preset).motion, easing: "ease-out" });
+  }
+
+  bursts.push({
+    x: .22 + Math.random() * .2,
+    y: .34 + Math.random() * .26,
+    vx: (Math.random() - .5) * .002,
+    vy: -Math.random() * .002,
+    r: 8 + Math.random() * 12,
+    life: 1,
+    hue: profile.hue,
+    color: profile.color
+  });
+}
+
+async function handleInput(event) {
+  const inserted = event.data || "";
+  const caret = storyInput.selectionStart ?? storyInput.value.length;
+  renderAll();
+
+  if (inserted) {
+    for (const [offset, char] of [...inserted].filter(char => /[a-zA-Z]/.test(char)).slice(0, 16).entries()) {
+      const position = Math.max(0, caret - inserted.length + offset);
+      triggerLetterVisual(char, position);
+      await audio.playLetterTone(char, { presetId: state.preset, velocity: .92, position });
+    }
+    if (/[^a-zA-Z]/.test(inserted)) {
+      const word = getCompletedWord(storyInput.value, caret);
+      if (word) {
+        audio.playWordMotif(word, { presetId: state.preset, velocity: .68 });
+        status.textContent = `${word} became a short motif.`;
+      }
+    } else if (/[a-zA-Z]/.test(inserted)) {
+      const profile = getLetterProfile(inserted.at(-1), { presetId: state.preset, paletteId: state.palette, position: Math.max(0, caret - 1) });
+      status.textContent = `${inserted.at(-1).toUpperCase()} color ${Math.round(profile.hue)} and ${Math.round(profile.tone.frequency)} Hz.`;
+    }
+  } else if (storyInput.value.length > lastValue.length) {
+    const added = storyInput.value.slice(lastValue.length);
+    for (const [offset, char] of [...added].filter(char => /[a-zA-Z]/.test(char)).slice(0, 8).entries()) {
+      const position = Math.max(0, lastValue.length + offset);
+      triggerLetterVisual(char, position);
+      audio.playLetterTone(char, { presetId: state.preset, velocity: .82, position });
+    }
+  }
+
+  lastValue = storyInput.value;
+}
+
+async function playPhrase(label = "Layering the phrase into word motifs.") {
+  renderAll(label);
+  const words = storyInput.value.match(/[a-zA-Z]+/g) || [];
+  words.slice(0, 10).forEach((word, wordIndex) => {
+    setTimeout(() => {
+      getWordMotif(word, { presetId: state.preset, paletteId: state.palette }).slice(0, 5).forEach(note => triggerLetterVisual(note.letter));
+    }, wordIndex * 190);
+  });
+  const played = await audio.playPhraseMotifs(storyInput.value, { presetId: state.preset });
+  if (!played && !audio.isSupported()) status.textContent = "Audio is not supported in this browser.";
 }
 
 async function copyStory() {
   try {
-    await navigator.clipboard.writeText(text.value);
-    status.textContent = 'Story copied to clipboard.';
-  } catch (error) {
-    text.focus();
-    text.select();
-    status.textContent = 'Copy shortcut ready: press Command+C or Ctrl+C.';
+    await navigator.clipboard.writeText(storyInput.value);
+    status.textContent = "Story copied to clipboard.";
+  } catch {
+    storyInput.focus();
+    storyInput.select();
+    status.textContent = "Copy shortcut ready: press Command+C or Ctrl+C.";
   }
 }
 
 function saveStory() {
-  const blob = new Blob([text.value], { type: 'text/plain' });
-  const link = document.createElement('a');
+  const blob = new Blob([storyInput.value], { type: "text/plain" });
+  const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = 'spectramuse-story.txt';
+  link.download = "spectramuse-story.txt";
   link.click();
   URL.revokeObjectURL(link.href);
-  status.textContent = 'Story text downloaded.';
+  status.textContent = "Story text downloaded.";
 }
 
 function nextSample() {
   sampleIndex = (sampleIndex + 1) % samples.length;
-  text.value = samples[sampleIndex];
-  renderMood();
-  status.textContent = 'Sample loaded.';
+  storyInput.value = samples[sampleIndex];
+  lastValue = storyInput.value;
+  renderAll("Sample loaded.");
 }
 
 function saveImage() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect width="1200" height="630" fill="#09080b"/><circle cx="420" cy="260" r="190" fill="hsl(${getComputedStyle(document.documentElement).getPropertyValue('--hue')},90%,62%)" opacity=".72"/><circle cx="780" cy="360" r="210" fill="hsl(${getComputedStyle(document.documentElement).getPropertyValue('--hue2')},90%,62%)" opacity=".58"/><text x="80" y="150" fill="#f8efe2" font-family="Courier New" font-size="76" font-weight="700">SpectraMuse</text><text x="80" y="232" fill="#f8efe2" opacity=".74" font-family="Courier New" font-size="34">Where stories become color, sound, and motion.</text></svg>`;
-  const blob = new Blob([svg], { type: 'image/svg+xml' });
-  const link = document.createElement('a');
+  const words = (storyInput.value.match(/[a-zA-Z]+/g) || ["SpectraMuse"]).slice(0, 6).join(" ");
+  const palette = getPalette(state.palette);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect width="1200" height="630" fill="#09080b"/><circle cx="385" cy="270" r="190" fill="hsl(${getComputedStyle(document.documentElement).getPropertyValue("--hue")},90%,62%)" opacity=".72"/><circle cx="780" cy="360" r="210" fill="hsl(${getComputedStyle(document.documentElement).getPropertyValue("--hue2")},90%,62%)" opacity=".58"/><text x="80" y="145" fill="#f8efe2" font-family="Courier New" font-size="76" font-weight="700">SpectraMuse</text><text x="80" y="232" fill="${palette.accent}" font-family="Courier New" font-size="42">${words.replace(/[<>&]/g, "")}</text><text x="80" y="548" fill="#f8efe2" opacity=".74" font-family="Courier New" font-size="30">Each letter has a color. Each color has a sound.</text></svg>`;
+  const blob = new Blob([svg], { type: "image/svg+xml" });
+  const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = 'spectramuse-scene.svg';
+  link.download = "spectramuse-scene.svg";
   link.click();
   URL.revokeObjectURL(link.href);
-  status.textContent = 'Image saved as SVG.';
+  status.textContent = "Image saved as SVG.";
 }
 
 function handleAction(action) {
-  if (action === 'play') playFeeling();
-  if (action === 'previewScene') playFeeling('Previewing scene.');
-  if (action === 'stop') { stopSound(); status.textContent = 'Sound stopped.'; }
-  if (action === 'sample') nextSample();
-  if (action === 'copy') copyStory();
-  if (action === 'save') saveStory();
-  if (action === 'saveMp4Story') status.textContent = 'MP4 story export is staged for the next engine build.';
-  if (action === 'saveMp4Scene') status.textContent = 'MP4 scene export is staged for the next engine build.';
-  if (action === 'saveImage') saveImage();
-  if (action === 'storyboard') { palette.value = 'dream'; status.textContent = 'Storyboard mood selected.'; renderMood(); }
-  if (action === 'clear') { text.value = ''; renderMood(); status.textContent = 'Cleared. Start a new line.'; }
+  if (action === "play") playPhrase();
+  if (action === "previewScene") playPhrase("Previewing scene with layered motifs.");
+  if (action === "stop") { audio.stop(); status.textContent = "Sound stopped."; }
+  if (action === "sample") nextSample();
+  if (action === "copy") copyStory();
+  if (action === "save") saveStory();
+  if (action === "saveImage") saveImage();
+  if (action === "storyboard") {
+    state.palette = "dream";
+    state.animation = "orb";
+    paletteSelect.value = state.palette;
+    animationStyle.value = state.animation;
+    writeStorage(PALETTE_KEY, state.palette);
+    writeStorage(ANIMATION_KEY, state.animation);
+    renderAll("Storyboard style selected.");
+  }
+  if (action === "saveMp4Story") status.textContent = "MP4 story export is staged for the next engine build.";
+  if (action === "saveMp4Scene") status.textContent = "MP4 scene export is staged for the next engine build.";
+  if (action === "clear") {
+    storyInput.value = "";
+    lastValue = "";
+    renderAll("Cleared. Type a word to begin.");
+    storyInput.focus();
+  }
 }
-
-document.querySelectorAll('[data-action]').forEach((button) => {
-  button.addEventListener('click', () => handleAction(button.dataset.action));
-});
-document.querySelectorAll('[data-version-target]').forEach((button) => {
-  button.addEventListener('click', () => setVersion(button.dataset.versionTarget));
-});
-text.addEventListener('input', renderMood);
-palette.addEventListener('change', renderMood);
-intensity.addEventListener('input', renderMood);
 
 function resize() {
-  canvas.width = innerWidth * devicePixelRatio;
-  canvas.height = innerHeight * devicePixelRatio;
+  const scale = window.devicePixelRatio || 1;
+  canvas.width = Math.floor(innerWidth * scale);
+  canvas.height = Math.floor(innerHeight * scale);
 }
-addEventListener('resize', resize);
-resize();
 
-const particles = Array.from({ length: 120 }, () => ({
-  x: Math.random(),
-  y: Math.random(),
-  r: Math.random() * 1.8 + .4,
-  v: Math.random() * .0008 + .0002
-}));
+function reconcileParticles() {
+  const preset = getPreset(state.preset);
+  const target = Math.round((state.mode === "lite" ? 72 : 122) * preset.particles);
+  while (particles.length < target) particles.push(createParticle());
+  particles = particles.slice(0, target);
+}
+
+function createParticle() {
+  return {
+    x: Math.random(),
+    y: Math.random(),
+    r: Math.random() * 1.7 + .35,
+    v: Math.random() * .00075 + .00018,
+    hue: Math.random() * 360
+  };
+}
 
 function draw() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle = 'rgba(248,239,226,.35)';
-  for (const p of particles) {
-    p.y -= p.v;
-    if (p.y < 0) p.y = 1;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const scale = window.devicePixelRatio || 1;
+  const preset = getPreset(state.preset);
+  const motion = clamp((Number(state.intensity) / 100) * preset.motion, .25, 1.85);
+  ctx.globalCompositeOperation = "lighter";
+
+  for (const particle of particles) {
+    particle.y -= particle.v * motion;
+    if (state.animation === "rain") particle.x += Math.sin(particle.y * 22) * .00018;
+    if (particle.y < -0.02) {
+      particle.y = 1.02;
+      particle.x = Math.random();
+    }
+    ctx.fillStyle = `hsla(${particle.hue}, 85%, 78%, ${Number(getComputedStyle(document.documentElement).getPropertyValue("--particle-opacity"))})`;
     ctx.beginPath();
-    ctx.arc(p.x * canvas.width, p.y * canvas.height, p.r * devicePixelRatio, 0, Math.PI * 2);
+    ctx.arc(particle.x * canvas.width, particle.y * canvas.height, particle.r * scale, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  for (let i = bursts.length - 1; i >= 0; i -= 1) {
+    const burst = bursts[i];
+    burst.life -= 0.025 / motion;
+    burst.x += burst.vx * motion;
+    burst.y += burst.vy * motion;
+    if (burst.life <= 0) {
+      bursts.splice(i, 1);
+      continue;
+    }
+    ctx.strokeStyle = `hsla(${burst.hue}, 100%, 72%, ${burst.life})`;
+    ctx.lineWidth = Math.max(1, 2.4 * scale * burst.life);
+    ctx.beginPath();
+    ctx.arc(burst.x * canvas.width, burst.y * canvas.height, burst.r * scale * (1.4 - burst.life), 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.globalCompositeOperation = "source-over";
   requestAnimationFrame(draw);
 }
 
-setVersion(getRequestedVersion(), false);
-renderMood();
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+document.querySelectorAll("[data-action]").forEach(button => {
+  button.addEventListener("click", () => handleAction(button.dataset.action));
+});
+
+document.querySelectorAll("[data-mode-target]").forEach(button => {
+  button.addEventListener("click", () => setMode(button.dataset.modeTarget));
+});
+
+[presetLite, presetStudio].forEach(select => {
+  select.addEventListener("change", () => setPreset(select.value));
+});
+
+paletteSelect.addEventListener("change", () => {
+  state.palette = paletteSelect.value;
+  writeStorage(PALETTE_KEY, state.palette);
+  renderAll(`${getPalette(state.palette).label} style active.`);
+});
+
+animationStyle.addEventListener("change", () => {
+  state.animation = animationStyle.value;
+  writeStorage(ANIMATION_KEY, state.animation);
+  renderAll("Animation style updated.");
+});
+
+intensity.addEventListener("input", () => {
+  state.intensity = Number(intensity.value);
+  writeStorage(INTENSITY_KEY, String(state.intensity));
+  renderAll("Motion intensity updated.");
+});
+
+storyInput.addEventListener("input", handleInput);
+storyInput.addEventListener("select", renderLetters);
+storyInput.addEventListener("keyup", renderLetters);
+storyInput.addEventListener("click", renderLetters);
+storyInput.addEventListener("scroll", () => {
+  letterLayer.scrollTop = storyInput.scrollTop;
+});
+
+["pointerdown", "touchstart", "keydown"].forEach(eventName => {
+  document.addEventListener(eventName, () => {
+    audio.unlock().then(unlocked => {
+      if (unlocked && status.textContent === "Ready.") status.textContent = "Audio unlocked. Type a letter.";
+    });
+  }, { passive: true });
+});
+
+addEventListener("resize", resize);
+resize();
+populatePaletteSelect();
+animationStyle.value = state.animation;
+intensity.value = String(state.intensity);
+setMode(state.mode, { persist: false });
+setPreset(state.preset, { persist: false });
+renderAll("Ready.");
 draw();
+
+window.SpectraMuse = {
+  getMode: () => state.mode,
+  setMode,
+  getPreset: () => state.preset,
+  setPreset,
+  getLetterProfile: letter => getLetterProfile(letter, { presetId: state.preset, paletteId: state.palette }),
+  playPhrase
+};
 </script>
 </body>
 </html>
