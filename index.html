@@ -196,7 +196,7 @@
   <section class="panel writer">
     <header>
       <h1>SpectraMuse</h1>
-      <p class="tagline">A synesthetic typewriter for living stories. Every letter has a note. Every word adds harmony.</p>
+      <p class="tagline">A synesthetic typewriter for living stories. Every letter, number, and symbol has a voice. Every word adds harmony.</p>
       <div class="mode-switch" aria-label="Choose Lite or Studio">
         <button id="liteToggle" type="button" data-version-target="lite">Lite</button>
         <button id="studioToggle" type="button" data-version-target="studio">Studio</button>
@@ -261,7 +261,7 @@
   <section class="panel visualizer" aria-label="Story visualizer">
     <div class="visual-copy">
       <p class="eyebrow">Living preview</p>
-      <p>Letters and numbers carry pitch. Words bloom into chords. Punctuation resolves the phrase.</p>
+      <p>Letters, numbers, and symbols carry pitch. Words bloom into chords. Punctuation resolves the phrase.</p>
     </div>
     <canvas class="orchestra-field" id="orchestraField" aria-hidden="true"></canvas>
     <div class="status-card" aria-label="Mood signature">
@@ -269,7 +269,7 @@
       <div class="readout"><strong id="textureReadout">0</strong><span>texture</span></div>
       <div class="readout"><strong id="intensityReadout">0%</strong><span>intensity</span></div>
     </div>
-    <p class="status" id="status">Tap the story, then type. Every letter and number will sound.</p>
+    <p class="status" id="status">Tap the story, then type. Every printable letter, number, and symbol will sound.</p>
     <div class="wave" id="wave"></div>
   </section>
 </main>
@@ -366,7 +366,7 @@ const TONES = {
   cinematic: { label: 'Cinematic Deep', attack: .10, release: 1.45, cutoff: 1050, wet: .38, delay: .14, voices: ['triangle', 'sine'], detune: 5 }
 };
 
-// Stable symbol language: letters and digits keep the same fundamental pitch in every timbre.
+// Stable symbol language: letters, digits, and printable ASCII symbols keep the same identity in every timbre.
 const LETTER_SCALE = [0, 2, 4, 5, 7, 9, 11]; // C major
 const LETTER_BASE_MIDI = 48; // C3
 const DIGIT_MIDI = Object.freeze({
@@ -381,6 +381,46 @@ const DIGIT_MIDI = Object.freeze({
   '8': 74, // D5
   '9': 76  // E5
 });
+
+// Full printable ASCII punctuation set. Every symbol gets a stable pitch,
+// visual lane, hue, gesture family, and playback pause. Pitches stay inside
+// C major so dense symbol strings remain musical instead of becoming noise.
+const SYMBOL_PROFILES = Object.freeze({
+  '!':  { midi: 41, family: 'cadence',    lane: 4, hueOffset: 12,  strength: 1.28, pauseMs: 190 },
+  '"': { midi: 43, family: 'quote',      lane: 4, hueOffset: 32,  strength: .86,  pauseMs: 70 },
+  '#':  { midi: 45, family: 'accent',     lane: 1, hueOffset: 54,  strength: 1.05, pauseMs: 75 },
+  '$':  { midi: 47, family: 'accent',     lane: 2, hueOffset: 76,  strength: 1.05, pauseMs: 75 },
+  '%':  { midi: 48, family: 'accent',     lane: 3, hueOffset: 98,  strength: 1.00, pauseMs: 75 },
+  '&':  { midi: 50, family: 'accent',     lane: 0, hueOffset: 120, strength: 1.05, pauseMs: 75 },
+  "'":  { midi: 52, family: 'quote',      lane: 4, hueOffset: 142, strength: .82,  pauseMs: 65 },
+  '(':  { midi: 53, family: 'pair-open',  lane: 0, hueOffset: 164, strength: .88,  pauseMs: 85 },
+  ')':  { midi: 55, family: 'pair-close', lane: 0, hueOffset: 186, strength: .88,  pauseMs: 85 },
+  '*':  { midi: 57, family: 'accent',     lane: 1, hueOffset: 208, strength: 1.15, pauseMs: 75 },
+  '+':  { midi: 59, family: 'operator',   lane: 2, hueOffset: 230, strength: 1.00, pauseMs: 80 },
+  ',':  { midi: 60, family: 'pause',      lane: 3, hueOffset: 252, strength: .75,  pauseMs: 135 },
+  '-':  { midi: 62, family: 'operator',   lane: 1, hueOffset: 274, strength: .88,  pauseMs: 80 },
+  '.':  { midi: 64, family: 'cadence',    lane: 2, hueOffset: 296, strength: .90,  pauseMs: 190 },
+  '/':  { midi: 65, family: 'direction',  lane: 3, hueOffset: 318, strength: .92,  pauseMs: 80 },
+  ':':  { midi: 67, family: 'pause',      lane: 4, hueOffset: 340, strength: .80,  pauseMs: 135 },
+  ';':  { midi: 69, family: 'pause',      lane: 0, hueOffset: 2,   strength: .82,  pauseMs: 145 },
+  '<':  { midi: 71, family: 'pair-open',  lane: 1, hueOffset: 24,  strength: .90,  pauseMs: 85 },
+  '=':  { midi: 72, family: 'operator',   lane: 2, hueOffset: 46,  strength: .94,  pauseMs: 80 },
+  '>':  { midi: 74, family: 'pair-close', lane: 1, hueOffset: 68,  strength: .90,  pauseMs: 85 },
+  '?':  { midi: 76, family: 'cadence',    lane: 3, hueOffset: 90,  strength: 1.12, pauseMs: 190 },
+  '@':  { midi: 77, family: 'accent',     lane: 0, hueOffset: 112, strength: 1.08, pauseMs: 75 },
+  '[':  { midi: 79, family: 'pair-open',  lane: 1, hueOffset: 134, strength: .90,  pauseMs: 85 },
+  '\\': { midi: 81, family: 'direction',  lane: 4, hueOffset: 156, strength: .92,  pauseMs: 80 },
+  ']':  { midi: 83, family: 'pair-close', lane: 1, hueOffset: 178, strength: .90,  pauseMs: 85 },
+  '^':  { midi: 84, family: 'accent',     lane: 4, hueOffset: 200, strength: 1.04, pauseMs: 75 },
+  '_':  { midi: 86, family: 'operator',   lane: 0, hueOffset: 222, strength: .82,  pauseMs: 80 },
+  '`':  { midi: 88, family: 'quote',      lane: 4, hueOffset: 244, strength: .78,  pauseMs: 65 },
+  '{':  { midi: 89, family: 'pair-open',  lane: 2, hueOffset: 266, strength: .95,  pauseMs: 85 },
+  '|':  { midi: 91, family: 'direction',  lane: 2, hueOffset: 288, strength: .98,  pauseMs: 80 },
+  '}':  { midi: 93, family: 'pair-close', lane: 2, hueOffset: 310, strength: .95,  pauseMs: 85 },
+  '~':  { midi: 95, family: 'accent',     lane: 3, hueOffset: 332, strength: .96,  pauseMs: 75 }
+});
+const SYMBOL_ORDER = Object.freeze(Object.keys(SYMBOL_PROFILES));
+const SYMBOL_CHARACTERS = new Set(SYMBOL_ORDER);
 
 for (let i = 0; i < 34; i++) {
   const bar = document.createElement('div');
@@ -403,7 +443,7 @@ function setVersion(version, save = true) {
   document.getElementById('studioToggle').setAttribute('aria-pressed', String(chosen === 'studio'));
   if (save) localStorage.setItem('spectramuse-version', chosen);
   status.textContent = chosen === 'lite'
-    ? 'Lite mode: letter and number tones with story-reactive motion are ready.'
+    ? 'Lite mode: letter, number, and symbol tones with story-reactive motion are ready.'
     : 'Studio mode: full controls unlocked.';
   renderMood();
 }
@@ -467,30 +507,37 @@ function cssHue(name, fallback) {
 }
 
 function symbolVisualIndex(symbol) {
-  const ch = String(symbol || '').toLowerCase();
+  const raw = String(symbol || '');
+  const ch = raw.toLowerCase();
   if (/^[a-z]$/.test(ch)) return ch.charCodeAt(0) - 97;
   if (/^[0-9]$/.test(ch)) return 26 + Number(ch);
+  const symbolIndex = SYMBOL_ORDER.indexOf(raw);
+  if (symbolIndex >= 0) return 36 + symbolIndex;
   return 18;
 }
 
 function orchestraBandForSymbol(symbol) {
-  return symbolVisualIndex(symbol) % 5;
+  const profile = SYMBOL_PROFILES[String(symbol || '')];
+  return profile ? profile.lane : symbolVisualIndex(symbol) % 5;
 }
 
 function strikeOrchestra(kind, value, strength = 1) {
   if (!orchestraCtx) return;
   const now = performance.now();
   const safeStrength = Math.max(.2, Math.min(1.6, strength));
-  if (kind === 'letter' || kind === 'digit') {
+  if (kind === 'letter' || kind === 'digit' || kind === 'symbol') {
     const symbolIndex = symbolVisualIndex(value);
+    const symbolProfile = SYMBOL_PROFILES[String(value || '')];
     orchestraPulses.push({
       kind,
+      glyph: kind === 'symbol' ? String(value) : '',
+      family: symbolProfile?.family || '',
       created: now,
-      duration: kind === 'digit' ? 1580 : 1450,
+      duration: kind === 'symbol' ? 1660 : kind === 'digit' ? 1580 : 1450,
       band: orchestraBandForSymbol(value),
-      strength: safeStrength,
+      strength: Math.min(1.6, safeStrength * (symbolProfile?.strength || 1)),
       phase: symbolIndex * .73,
-      hueOffset: (symbolIndex * 137.508) % 360
+      hueOffset: symbolProfile?.hueOffset ?? ((symbolIndex * 137.508) % 360)
     });
   } else if (kind === 'word') {
     const seed = hashWord(String(value || 'muse'));
@@ -590,6 +637,18 @@ function drawOrchestraField(now = performance.now()) {
       orchestraCtx.moveTo(x, h * .07);
       orchestraCtx.lineTo(x, h * .86);
       orchestraCtx.stroke();
+    } else if (pulse.kind === 'symbol') {
+      // Symbols travel as their actual glyph, so @, #, $, brackets, operators,
+      // quotes, slashes, and punctuation each have an unmistakable visual voice.
+      orchestraCtx.save();
+      orchestraCtx.fillStyle = `hsla(${hue},100%,84%,${.90 * life})`;
+      orchestraCtx.shadowColor = `hsla(${hue},100%,72%,${.55 * life})`;
+      orchestraCtx.shadowBlur = 8 + pulse.strength * 7;
+      orchestraCtx.font = `700 ${Math.round(13 + pulse.strength * 5)}px "Courier New", monospace`;
+      orchestraCtx.textAlign = 'center';
+      orchestraCtx.textBaseline = 'middle';
+      orchestraCtx.fillText(pulse.glyph || '•', x, y);
+      orchestraCtx.restore();
     } else {
       orchestraCtx.fillStyle = `hsla(${hue},100%,82%,${.82 * life})`;
       orchestraCtx.beginPath();
@@ -616,7 +675,10 @@ function digitToMidi(digit) {
 }
 
 function symbolToMidi(symbol) {
-  return /^[0-9]$/.test(String(symbol || '')) ? digitToMidi(symbol) : letterToMidi(symbol);
+  const raw = String(symbol || '');
+  if (/^[0-9]$/.test(raw)) return digitToMidi(raw);
+  if (/^[a-z]$/i.test(raw)) return letterToMidi(raw);
+  return SYMBOL_PROFILES[raw]?.midi ?? null;
 }
 
 function hashWord(word) {
@@ -809,19 +871,24 @@ function createVoice(frequency, when, duration, velocity = 1, options = {}) {
 
 function playSymbol(symbol, when = null, velocity = 1) {
   if (!audioContext) return;
-  const midi = symbolToMidi(symbol);
+  const raw = String(symbol || '');
+  const midi = symbolToMidi(raw);
   if (midi == null) return;
   const start = when == null ? audioContext.currentTime : when;
   // Sound palettes change timbre, not the symbol's fundamental identity.
   const frequency = midiToFrequency(midi);
-  const isDigit = /^[0-9]$/.test(String(symbol));
-  const duration = tone.value === 'velvet' || tone.value === 'aurora' ? .16 : tone.value === 'piano' ? .055 : .07;
-  createVoice(frequency, start, duration, velocity, {
+  const isDigit = /^[0-9]$/.test(raw);
+  const isLetter = /^[a-z]$/i.test(raw);
+  const symbolProfile = SYMBOL_PROFILES[raw];
+  const voiceVelocity = Math.min(1.35, velocity * (symbolProfile?.strength || 1));
+  const baseDuration = tone.value === 'velvet' || tone.value === 'aurora' ? .16 : tone.value === 'piano' ? .055 : .07;
+  const duration = symbolProfile ? Math.max(.055, baseDuration * (symbolProfile.family === 'cadence' ? 1.28 : 1)) : baseDuration;
+  createVoice(frequency, start, duration, voiceVelocity, {
     attack: tone.value === 'piano' ? .0025 : undefined,
     release: tone.value === 'piano' ? .82 : undefined
   });
-  pulseWave(symbol, velocity);
-  strikeOrchestra(isDigit ? 'digit' : 'letter', symbol, velocity);
+  pulseWave(raw, voiceVelocity);
+  strikeOrchestra(isDigit ? 'digit' : isLetter ? 'letter' : 'symbol', raw, velocity);
 }
 
 function playLetter(letter, when = null, velocity = 1) {
@@ -893,6 +960,12 @@ function getPreviousWord(cursorPosition = text.selectionStart) {
   return match ? match[1] : '';
 }
 
+function getWordImmediatelyBefore(cursorPosition) {
+  const left = text.value.slice(0, Math.max(0, cursorPosition));
+  const match = left.match(/([A-Za-z0-9']+)$/);
+  return match ? match[1] : '';
+}
+
 function inferInsertedText(before, after) {
   if (after.length <= before.length) return '';
   let prefix = 0;
@@ -912,18 +985,33 @@ function inferInsertedText(before, after) {
 async function soundInsertedText(inserted) {
   if (!inserted || !(await ensureAudio())) return;
   applyToneFx();
-  const chars = [...inserted].slice(0, 24);
+  const chars = [...inserted].slice(0, 48);
   const now = audioContext.currentTime + .012;
   chars.forEach((ch, i) => {
     const when = now + i * .045;
-    if (/[a-z0-9]/i.test(ch)) playSymbol(ch, when, 1);
-    else if (/\s/.test(ch)) {
-      const word = getPreviousWord(text.selectionStart - Math.max(0, chars.length - i));
+    const cursorBeforeChar = text.selectionStart - Math.max(1, chars.length - i);
+
+    if (/[a-z0-9]/i.test(ch)) {
+      playSymbol(ch, when, 1);
+      return;
+    }
+
+    if (SYMBOL_CHARACTERS.has(ch)) {
+      const profile = SYMBOL_PROFILES[ch];
+      // Apostrophes can live inside words without prematurely closing the word harmony.
+      if (ch !== "'") {
+        const word = getWordImmediatelyBefore(cursorBeforeChar);
+        if (word) playWordChord(word, when, .78);
+      }
+      playSymbol(ch, when + .025, 1);
+      if (/[.!?]/.test(ch)) playPunctuation(ch, when + .085);
+      status.textContent = `Symbol ${ch} joined the score — ${profile.family}.`;
+      return;
+    }
+
+    if (/\s/.test(ch)) {
+      const word = getWordImmediatelyBefore(cursorBeforeChar);
       if (word) playWordChord(word, when, .72);
-    } else if (/[.!?]/.test(ch)) {
-      const word = getPreviousWord(text.selectionStart - Math.max(0, chars.length - i));
-      if (word) playWordChord(word, when, .82);
-      playPunctuation(ch, when + .06);
     }
   });
 }
@@ -959,15 +1047,25 @@ async function playStory(label = 'Performing story') {
       await sleep(92);
       continue;
     }
+
+    // Keep apostrophes inside words while still giving the apostrophe its own voice.
+    if (ch === "'" && currentWord && /[a-z0-9]/i.test(chars[i + 1] || '')) {
+      currentWord += ch;
+      playSymbol(ch, audioContext.currentTime + .01, .82);
+      await sleep(SYMBOL_PROFILES[ch].pauseMs);
+      continue;
+    }
+
     if (currentWord) {
       playWordChord(currentWord, audioContext.currentTime + .015, .82);
       currentWord = '';
     }
-    if (/[.!?]/.test(ch)) {
-      playPunctuation(ch, audioContext.currentTime + .03);
-      await sleep(210);
-    } else if (/,;:]/.test(ch)) {
-      await sleep(145);
+
+    if (SYMBOL_CHARACTERS.has(ch)) {
+      const profile = SYMBOL_PROFILES[ch];
+      playSymbol(ch, audioContext.currentTime + .015, .9);
+      if (/[.!?]/.test(ch)) playPunctuation(ch, audioContext.currentTime + .075);
+      await sleep(profile.pauseMs);
     } else if (/\s/.test(ch)) {
       await sleep(110);
     }
