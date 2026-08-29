@@ -111,6 +111,10 @@
     border-top: 1px solid rgba(255,255,255,.13);
   }
   .field { display: grid; gap: 7px; color: rgba(248,239,226,.68); font-size: 12px; }
+  .volume-field { grid-column: 1 / -1; }
+  .volume-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+  .volume-mute { min-height: 38px; padding: 8px 12px; color: var(--ink); background: rgba(255,255,255,.08); }
+  .volume-value { min-width: 48px; text-align: right; color: var(--accent); font-weight: 700; }
   button, select, input[type="range"] { font: 700 14px/1 "Courier New", Courier, monospace; }
   button, .select-wrap { min-height: 44px; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; }
   button { cursor: pointer; padding: 11px 13px; color: #09080b; background: var(--accent); }
@@ -243,6 +247,14 @@
       <label class="field">Motion intensity
         <input id="intensity" type="range" min="25" max="100" value="74" />
       </label>
+      <div class="field volume-field">
+        <span>Volume</span>
+        <div class="volume-row">
+          <button id="muteButton" class="volume-mute secondary" type="button" aria-pressed="false">Mute</button>
+          <input id="volume" type="range" min="0" max="200" step="1" value="100" aria-label="SpectraMuse volume" />
+          <strong id="volumeValue" class="volume-value">100%</strong>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -273,6 +285,9 @@ const ctx = canvas.getContext('2d');
 const palette = document.getElementById('palette');
 const tone = document.getElementById('tone');
 const intensity = document.getElementById('intensity');
+const volume = document.getElementById('volume');
+const volumeValue = document.getElementById('volumeValue');
+const muteButton = document.getElementById('muteButton');
 const hueReadout = document.getElementById('hueReadout');
 const textureReadout = document.getElementById('textureReadout');
 const intensityReadout = document.getElementById('intensityReadout');
@@ -289,6 +304,43 @@ let playbackToken = 0;
 let sampleIndex = 0;
 let previousText = text.value;
 const activeSources = new Set();
+const VOLUME_KEY = 'spectramuse-volume';
+const MUTED_KEY = 'spectramuse-muted';
+let volumePercent = loadVolumePercent();
+let muted = loadMuted();
+
+function loadVolumePercent() {
+  try {
+    const saved = Number(localStorage.getItem(VOLUME_KEY));
+    return Number.isFinite(saved) ? Math.max(0, Math.min(200, saved)) : 100;
+  } catch (error) {
+    return 100;
+  }
+}
+
+function loadMuted() {
+  try { return localStorage.getItem(MUTED_KEY) === 'true'; } catch (error) { return false; }
+}
+
+function targetMasterGain() {
+  return muted ? .0001 : .78 * (volumePercent / 100);
+}
+
+function syncVolumeControls() {
+  volume.value = String(volumePercent);
+  volumeValue.textContent = `${Math.round(volumePercent)}%`;
+  volume.setAttribute('aria-valuenow', String(Math.round(volumePercent)));
+  volume.setAttribute('aria-valuetext', `${Math.round(volumePercent)} percent`);
+  muteButton.textContent = muted ? 'Unmute' : 'Mute';
+  muteButton.setAttribute('aria-pressed', String(muted));
+}
+
+function applyMasterVolume() {
+  if (!audioContext || !masterGain) return;
+  const now = audioContext.currentTime;
+  masterGain.gain.cancelScheduledValues(now);
+  masterGain.gain.setTargetAtTime(targetMasterGain(), now, .015);
+}
 
 const samples = [
   'The moon found a hidden door in the lake, and every ripple sang in blue.',
@@ -607,7 +659,7 @@ function buildAudioGraph() {
   delay = audioContext.createDelay(1.0);
   delayGain = audioContext.createGain();
 
-  masterGain.gain.value = .78;
+  masterGain.gain.value = targetMasterGain();
   compressor.threshold.value = -16;
   compressor.knee.value = 18;
   compressor.ratio.value = 6;
@@ -1032,6 +1084,21 @@ tone.addEventListener('change', async () => {
   status.textContent = `Sound palette: ${TONES[tone.value].label}.`;
 });
 intensity.addEventListener('input', renderMood);
+volume.addEventListener('input', () => {
+  volumePercent = Math.max(0, Math.min(200, Number(volume.value) || 0));
+  try { localStorage.setItem(VOLUME_KEY, String(volumePercent)); } catch (error) {}
+  syncVolumeControls();
+  applyMasterVolume();
+  status.textContent = muted ? `Volume set to ${Math.round(volumePercent)}% (muted).` : `Volume: ${Math.round(volumePercent)}%.`;
+});
+muteButton.addEventListener('click', async () => {
+  muted = !muted;
+  try { localStorage.setItem(MUTED_KEY, String(muted)); } catch (error) {}
+  syncVolumeControls();
+  if (!muted) await ensureAudio();
+  applyMasterVolume();
+  status.textContent = muted ? 'Sound muted.' : `Sound restored at ${Math.round(volumePercent)}%.`;
+});
 
 function resize() {
   const ratio = window.devicePixelRatio || 1;
@@ -1068,6 +1135,7 @@ function draw() {
   requestAnimationFrame(draw);
 }
 
+syncVolumeControls();
 const savedTone = localStorage.getItem('spectramuse-tone');
 if (savedTone && TONES[savedTone]) tone.value = savedTone;
 setVersion(getRequestedVersion(), false);
